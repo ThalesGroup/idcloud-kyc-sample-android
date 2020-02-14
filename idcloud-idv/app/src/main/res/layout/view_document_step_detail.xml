@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="240dp"
+    android:layout_height="240dp"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:background="@drawable/doc_step_detail_background">
+
+    <TextView
+        android:id="@+id/view_document_step_detail_caption_top"
+        android:layout_weight="1"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_margin="8dp"
+        android:gravity="center|bottom"
+        android:fontFamily="@string/font_family_light"
+        android:textColor="@android:color/white"
+        tools:text="@tools:sample/lorem"/>
+
+    <ImageView
+        android:id="@+id/view_document_step_detail_image"
+        android:layout_weight="3"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:adjustViewBounds="true"
+        android:contentDescription="@android:string/untitled"
+        tools:srcCompat="@tools:sample/backgrounds/scenic"/>
+
+    <TextView
+        android:id="@+id/view_document_step_detail_caption_bottom"
+        android:layout_weight="1"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_margin="8dp"
+        android:gravity="center|top"
+        android:fontFamily="@string/font_family_light"
+        android:textColor="@android:color/white"
+        tools:text="@tools:sample/lorem"/>
+
+</LinearLayout>

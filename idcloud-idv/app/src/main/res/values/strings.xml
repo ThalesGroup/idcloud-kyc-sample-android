@@ -1,0 +1,219 @@
+<!--MIT License-->
+
+<!--Copyright (c) 2019 Thales DIS-->
+
+<!--Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated-->
+<!--documentation files (the "Software"), to deal in the Software without restriction, including without limitation the-->
+<!--rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to-->
+<!--permit persons to whom the Software is furnished to do so, subject to the following conditions:-->
+
+<!--The above copyright notice and this permission notice shall be included in all copies or substantial portions of the-->
+<!--Software.-->
+
+<!--THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE-->
+<!--WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR-->
+<!--COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR-->
+<!--OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.-->
+
+<!--IMPORTANT: This source code is intended to serve training information purposes only.-->
+<!--Please make sure to review our IdCloud documentation, including security guidelines.-->
+
+<resources>
+    <string name="app_name">IdCloud KYC</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <!-- FONTS -->
+    <string name="font_family_light">sans-serif-light</string>
+
+    <!--Document scann warnings-->
+    <string name="doc_scan_warning_contrast">Please choose a more contrasting background</string>
+    <string name="doc_scan_warning_focusing">Focusing…</string>
+    <string name="doc_scan_warning_hotspot">Hotspot detected</string>
+    <string name="doc_scan_warning_light">Picture is too dark</string>
+    <string name="doc_scan_warning_blur">Picture is blurry</string>
+    <string name="doc_scan_warning_fit">Document not detected</string>
+
+    <!--UI-->
+    <string name="fragment_home_button_enroll">OnBoard</string>
+
+    <string name="fragment_first_step_caption">Mybank ID Verification</string>
+    <string name="fragment_first_step_description">• Ease your enrollment with automatic data extraction and from filing\n• Authenticate with face recognition service</string>
+    <string name="fragment_first_step_button_next">Let\'s go!</string>
+
+    <string name="fragment_second_step_caption">Document Type Selection</string>
+    <string name="fragment_second_step_button_id_card">ID Card</string>
+    <string name="fragment_second_step_button_passport">Passport</string>
+
+    <string name="fragment_id_card_caption">Document Capture:\nID Card</string>
+    <string name="fragment_id_card_description_first">• Please make sure to take the picture with the following instructions\n• Position you document flat, take the picture in landscape mode, fit the picture in the white rectangle</string>
+    <string name="fragment_id_card_description_second">• Avoid light hotspot, wait automatic detection and follow live instuctions.</string>
+    <string name="fragment_id_card_button_next">Next</string>
+
+    <string name="fragment_face_id_tutorial_caption">Selfie Capture</string>
+    <string name="fragment_face_id_tutorial_description">Please make sure to take the selfie picture with the following instructions.\n\nDo not close your eyes until the application asks for it.\nThe picture shall be taken on identical conditions than the ID one (no glasses, no hat, no smile).</string>
+    <string name="fragment_face_id_tutorial_button_next">Take selfie</string>
+
+    <!--Missing permissions-->
+    <string name="ui_label_permissions_caption">Missing permission</string>
+    <string name="ui_label_permissions_description">Please make sure, that non permission is permanently blocked in the settings.</string>
+    <string name="ui_button_permissions">Ask for permissions</string>
+
+    <!--KYC-->
+    <string name="STRING_KYC_DOCUMENT_CAPTURE">Document Capture:\n%s</string>
+    <string name="STRING_KYC_ID_CARD">ID Card</string>
+    <string name="STRING_KYC_PASSPORT">Passport</string>
+
+    <string name="STRING_KYC_FIRST_STEP_ID">Capture your ID card or Passport</string>
+    <string name="STRING_KYC_FIRST_STEP_FACE">Take a selfie for facial check</string>
+    <string name="STRING_KYC_FIRST_STEP_REVIEW">Review and submit your information</string>
+
+    <!--KYC OVERVIEW SCREEN-->
+    <string name="fragment_kyc_overview_button_done">Done</string>
+    <string name="fragment_kyc_overview_caption">User enrollment</string>
+    <string name="fragment_kyc_overview_check_document">Please check your documents above\n before submitting for verification.</string>
+    <string name="placeholder_doc_extraction">Name, surname: \nBirth date: \nCountry: \nDocument type: \nDocument number: \nGender: \nExpiry date: \n</string>
+    <string name="button_enrollment_verify">SUBMIT</string>
+
+    <string name="kyc_result_name_surname">"Name, surname: </string>
+    <string name="kyc_result_birth_date">"Birth date</string>
+    <string name="kyc_result_gender">"Gender</string>
+    <string name="kyc_result_doc_type">"Document type</string>
+    <string name="kyc_result_doc_number">"Document number</string>
+    <string name="kyc_result_expiry_date">"Expiry date</string>
+    <string name="kyc_result_nationality">"Nationality</string>
+    <string name="kyc_result_verification_count">"Total verifications</string>
+
+    <!-- DOCUMENT SCANNING -->
+    <string name="kyc_doc_turn_detail_top">Turn the document over</string>
+    <string name="kyc_doc_turn_detail_bottom">Click on document to continue</string>
+
+    <string name="kyc_doc_scan_detail_top">Present the document\non the same orientation as below</string>
+    <string name="kyc_doc_scan_detail_bottom">Click on document to start scanning</string>
+
+    <string name="kyc_doc_scan_step_01">1: Scan\nFront doc:</string>
+    <string name="kyc_doc_scan_step_02">2: Turn\nDoc over:</string>
+    <string name="kyc_doc_scan_step_03">3: Scan\nBack doc:</string>
+
+    <!-- Options-->
+    <string name="STRING_KYC_OPTION_SECTION_GENERAL">General settings</string>
+    <string name="STRING_KYC_OPTION_WEB_TOKEN">Update JSON Web Token</string>
+    <string name="STRING_KYC_OPTION_FACE_REC_CAP">Facial recognition</string>
+    <string name="STRING_KYC_OPTION_FACE_REC_DES">Take a selfie after ID verification step.\nThe facial recognition is done by a server.</string>
+
+    <string name="STRING_KYC_OPTION_SECTION_RISK">Risk Management</string>
+    <string name="STRING_KYC_OPTION_IGNORE_DATE_CAP">Ignore expiration date</string>
+    <string name="STRING_KYC_OPTION_IGNORE_DATE_DES">Ignore if document has expired.</string>
+
+    <string name="STRING_KYC_OPTION_SECTION_SCAN">Identity Document Scan</string>
+    <string name="STRING_KYC_OPTION_MANUAL_MODE_CAP">Manual capture</string>
+    <string name="STRING_KYC_OPTION_MANUAL_MODE_DES">Set Manual/Automatic capture mode for document scan.</string>
+    <string name="STRING_KYC_OPTION_AUTO_DETECTION_CAP">Automatic Type Detection</string>
+    <string name="STRING_KYC_OPTION_AUTO_DETECTION_DES">Set Manual/Automatic document type detection.</string>
+    <string name="STRING_KYC_OPTION_CAMERA_ORIENT_CAP">Camera Orientation</string>
+    <string name="STRING_KYC_OPTION_CAMERA_ORIENT_DES">Set the camera orientation to portrait.</string>
+    <string name="STRING_KYC_OPTION_DETECTION_ZONE_CAP">ID Capture Detection Zone</string>
+    <string name="STRING_KYC_OPTION_DETECTION_ZONE_DES">Set a detection zone (80%) and display a rectangle.</string>
+    <string name="STRING_KYC_OPTION_BW_PHOTO_COPY_CAP">BW Photo copy</string>
+    <string name="STRING_KYC_OPTION_BW_PHOTO_COPY_DES">Enable or disable the Black and white photocopy QA check.</string>
+
+    <string name="STRING_KYC_OPTION_SECTION_FACEID">Face capture</string>
+    <string name="STRING_KYC_OPTION_FACE_LIVENESS_MODE_CAP">Liveness Mode</string>
+    <string name="STRING_KYC_OPTION_FACE_LIVENESS_MODE_DES">Face capturing behaviour</string>
+    <string name="STRING_KYC_OPTION_FACE_LIVENESS_MODE_PASSIVE">Passive</string>
+    <string name="STRING_KYC_OPTION_FACE_LIVENESS_MODE_ACTIVE">Active</string>
+    <string name="STRING_KYC_OPTION_FACE_QUALITY_THRESHOLD_CAP">Quality threshold</string>
+    <string name="STRING_KYC_OPTION_FACE_QUALITY_THRESHOLD_DES">From 0 to 100</string>
+    <string name="STRING_KYC_OPTION_FACE_LIVENESS_THRESHOLD_CAP">Liveness threshold</string>
+    <string name="STRING_KYC_OPTION_FACE_LIVENESS_THRESHOLD_DES">From 0 to 100</string>
+    <string name="STRING_KYC_OPTION_FACE_BLINK_TIMEOUT_CAP">Blink timeout</string>
+    <string name="STRING_KYC_OPTION_FACE_BLINK_TIMEOUT_DES">From 0 to 100s</string>
+
+    <string name="STRING_KYC_OPTION_SECTION_VERSION">Versions</string>
+    <string name="STRING_KYC_OPTION_VERSION_APP">Application Version</string>
+    <string name="STRING_KYC_OPTION_VERSION_ID_SDK">IDV Doc Versio</string>
+    <string name="STRING_KYC_OPTION_VERSION_LIVENESS">IDV Face Version</string>
+    <string name="STRING_KYC_OPTION_VERSION_PROTECTOR">Protector SDK Version</string>
+    <string name="STRING_KYC_OPTION_PRIVACY_POLICY">Privacy Policy</string>
+
+    <!--KYC Document Scan-->
+    <string name="STRING_KYC_DOC_SCAN_CAPTION_IDCARD">Document Capture:\nID Card</string>
+    <string name="STRING_KYC_DOC_SCAN_CAPTION_PASSPORT">Document Capture:\nPassport</string>
+
+    <string name="STRING_KYC_DOC_SCAN_01_AUTO">• Please make sure to take the picture with the following instructions\n\n• Position you document flat, take the picture in landscape mode, fit the picture in the white rectangle</string>
+    <string name="STRING_KYC_DOC_SCAN_01_MANUAL">• Please make sure to take the picture with the following instructions\n\n• Capture conly the area of the document containing personal information.</string>
+
+    <string name="STRING_KYC_DOC_SCAN_02_AUTO">• Avoid light hotspot, wait automatic detection and follow live instuctions</string>
+    <string name="STRING_KYC_DOC_SCAN_02_MANUAL">• Validate the corpping area, turn the document over and tap on screen.</string>
+
+    <string name="STRING_KYC_DOC_TURN_DETAIL_TOP">Turn the document over</string>
+    <string name="STRING_KYC_DOC_TURN_DETAIL_BOTTOM">Click on document to continue</string>
+
+    <string name="STRING_KYC_DOC_SCAN_DETAIL_TOP">Present the document\non the same orientation as below</string>
+    <string name="STRING_KYC_DOC_SCAN_DETAIL_BOTTOM">Click on document to start scanning</string>
+
+    <string name="STRING_KYC_DOC_SCAN_STEP_01">1: Scan\nFront doc:</string>
+    <string name="STRING_KYC_DOC_SCAN_STEP_02">2: Turn\nDoc over:</string>
+    <string name="STRING_KYC_DOC_SCAN_STEP_03">3: Scan\nBack doc:</string>
+
+
+    <string name="STRING_KYC_DOC_SCAN_WARNING_CONTRAST">Please choose a more contrasting background</string>
+    <string name="STRING_KYC_DOC_SCAN_WARNING_FOCUSING">Focusing…</string>
+    <string name="STRING_KYC_DOC_SCAN_WARNING_HOTSPOT">Hotspot detected</string>
+    <string name="STRING_KYC_DOC_SCAN_WARNING_LIGHT">Picture is too dark</string>
+    <string name="STRING_KYC_DOC_SCAN_WARNING_BLUR">Picture is blurry</string>
+    <string name="STRING_KYC_DOC_SCAN_WARNING_FIT">Document not detected</string>
+
+    <string name="STRING_KYC_DOC_SCAN_ERROR_ROOT">Detected rooted device</string>
+    <string name="STRING_KYC_DOC_SCAN_ERROR_ARCHITECTURE">Detected invalid architecture</string>
+    <string name="STRING_KYC_DOC_SCAN_ERROR_BACKGROUND">App has gone to background</string>
+
+
+    <!-- KYC Face Id-->
+    <string name="STRING_KYC_FACE_ACTION_NONE">No liveness action required.</string>
+    <string name="STRING_KYC_FACE_ACTION_KEEP_STILL">Do not move the head.</string>
+    <string name="STRING_KYC_FACE_ACTION_BLINK">Blink eyes.</string>
+    <string name="STRING_KYC_FACE_ACTION_MOVE_UP">Turn your head up.</string>
+    <string name="STRING_KYC_FACE_ACTION_MOVE_DOWN">Turn your head down.</string>
+    <string name="STRING_KYC_FACE_ACTION_MOVE_LEFT">Turn your head left.</string>
+    <string name="STRING_KYC_FACE_ACTION_MOVE_RIGHT">Turn your head right.</string>
+    <string name="STRING_KYC_FACE_ACTION_MOVE_TO_CENTER">Turn your head to the center of the screen.</string>
+    <string name="STRING_KYC_FACE_ACTION_SIDE_TO_SIDE">Turn your head side to side.</string>
+    <string name="STRING_KYC_FACE_ACTION_ROTATE_YAW">Turn your head side to side.</string>
+
+    <string name="selfie_enroll_instructions">Please, point camera towards your face, look straight and follow the instructions on screen.</string>
+
+
+    <string name="face_status_bad_quality">Face enrollment failed due bad picture quality.Please try again.</string>
+    <string name="face_status_camera_not_found">Face enrollment failed. No camera found.</string>
+    <string name="face_status_canceled">Face enrollment failed. User canceled. Please try again.</string>
+    <string name="face_status_face_not_found">Face enrollment failed. No face detected. Please try again.</string>
+    <string name="face_status_liveness_check_failed">Liveness check during face enrollment failed. Please try again.</string>
+    <string name="face_status_match_not_found">No match found. Please try again.</string>
+    <string name="face_status_match_timeout">Face enrollment failed due timeout. Please try again.</string>
+    <string name="face_status_match_none">Face enrollment failed. Please try again.</string>
+
+    <!-- Terms and Conditions -->
+    <string name="legal_privacy_policy">Privacy Policy</string>
+    <string name="legal_terms_conditions">Terms of Use</string>
+    <string name="legal_userAgreementDescription">PLEASE READ THE FOLLOWING TERMS OF USE AND DISCLAIMERS CAREFULLY BEFORE USING THE SERVICE</string>
+    <string name="legal_agrements">By accessing or using this service, you agree to these terms of use, conditions and all applicable laws.\nProvider reserves the right to change the terms, conditions, and notices under which the service is offered, including but not limited to the charges associated with the use of the service.\nYou are responsible for regularly reviewing these terms and conditions.\nUnless otherwise specified, the service is for your personal and non commercial use.\nYou may not transmit, display, perform, reproduce, publish, license, create derivative works from, transfer, or sell any information, software, products or services obtained from the service.\nYou may display and, subject to any expressly stated restrictions or limitations relating to specific material, electronically copy, download and print hard copy portions of the material from the different areas of the service solely for your own non commercial use, or to purchase products.\nAny other use of materials on this service, including but not limited to the modification, reproduction, distribution, republication, display or transmission of the content of this service, without prior written permission of provider is strictly prohibited.</string>
+
+    <!-- GDPR -->
+    <string name="legal_privacy_caption">You privacy is protected!</string>
+    <string name="legal_privacy_description">Images sent to KYC Demo Server are deleted after verification.\n\nGDPR compliant solution, no data is stored on the device.</string>
+    <string name="legal_privacy_button">Privacy Policy</string>
+
+
+    <!--JSON Web Token Dialog-->
+    <string name="STRING_JSON_WEB_TOKEN_CAP">Update JSON Web Token</string>
+    <string name="STRING_JSON_WEB_TOKEN_DES">Paste new token.</string>
+    <string name="STRING_JSON_WEB_TOKEN_PLACEHOLDER">JSON Web Token</string>
+    <string name="STRING_JSON_WEB_TOKEN_INVALID">"Invalid JWT. Value was not stored."</string>
+    <string name="STRING_JSON_WEB_TOKEN_EXPIRATION">"JWT Expiration"</string>
+    <string name="STRING_JSON_WEB_TOKEN_NO_EXPIRATION">"Failed to get expiration date."</string>
+</resources>

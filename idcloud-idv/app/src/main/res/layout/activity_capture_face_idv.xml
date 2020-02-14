@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <!--Camera preview-->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintDimensionRatio="H,3:4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <fragment
+            android:id="@+id/activity_capture_face_idv_face_fragment"
+            android:name="com.gemalto.ekyc.face_capture.FaceCaptureFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:layout_margin="3dp"
+            />
+
+        <com.thalesgroup.kyc.idv.gui.view.ClippingView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerVertical="true"
+            android:visibility="visible"
+            />
+
+    </RelativeLayout>
+
+    <!--Helper layout to find out proper placement of progress steps-->
+    <RelativeLayout
+        android:id="@+id/activity_capture_face_idv_helper_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="H,1:1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+        <!--Score progress bar-->
+        <include layout="@layout/view_liveness_progressbar"
+            android:id="@+id/activity_capture_face_nt_score_progress"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </RelativeLayout>
+
+    <!--Action description label-->
+    <TextView
+        android:id="@+id/activity_capture_face_idv_action_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/dimensionMarginNormal"
+        android:lines="2"
+        android:text="@android:string/untitled"
+        android:textAlignment="center"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="50sp"
+        android:gravity="center"
+        app:autoSizeMaxTextSize="50sp"
+        app:autoSizeMinTextSize="30sp"
+        app:autoSizeStepGranularity="2sp"
+        app:autoSizeTextType="uniform"
+        app:layout_constraintBottom_toTopOf="@+id/activity_capture_face_idv_helper_layout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!--Score description label. It might be invisible in preview due the color.-->
+    <TextView
+        android:id="@+id/activity_capture_face_idv_score_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/dimensionMarginNormal"
+        android:text="@android:string/untitled"
+        android:textAlignment="center"
+        android:textColor="@android:color/tertiary_text_light"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/activity_capture_face_idv_helper_layout" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+

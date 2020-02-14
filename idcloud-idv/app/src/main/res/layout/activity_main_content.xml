@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--MIT License-->
+
+<!--Copyright (c) 2019 Thales DIS-->
+
+<!--Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated-->
+<!--documentation files (the "Software"), to deal in the Software without restriction, including without limitation the-->
+<!--rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to-->
+<!--permit persons to whom the Software is furnished to do so, subject to the following conditions:-->
+
+<!--The above copyright notice and this permission notice shall be included in all copies or substantial portions of the-->
+<!--Software.-->
+
+<!--THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE-->
+<!--WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR-->
+<!--COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR-->
+<!--OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.-->
+
+<!--IMPORTANT: This source code is intended to serve training information purposes only.-->
+<!--Please make sure to review our IdCloud documentation, including security guidelines.-->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/img_gradient_primary"
+    android:orientation="vertical"
+    android:gravity="start">
+
+    <!--Main activity layout-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="start">
+
+    <!--Menu button-->
+    <ImageView
+        android:id="@+id/app_bar_main_menu_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:layout_marginStart="@dimen/activity_vertical_margin"
+        android:tint="@color/hamburger_menu"
+        android:src="@drawable/outline_menu_black_36"
+        android:contentDescription="@android:string/untitled" />
+
+    <!--Main fragment container-->
+    <FrameLayout
+        android:id="@+id/app_bar_main_fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    </LinearLayout>
+
+    <!--Fullscreen loading overlay-->
+    <LinearLayout
+        android:id="@+id/activity_main_progress"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorOverlayBackground"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="invisible">
+        <ProgressBar
+            android:id="@+id/activity_main_progressbar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="?android:attr/progressBarStyle"/>
+    </LinearLayout>
+
+</RelativeLayout>

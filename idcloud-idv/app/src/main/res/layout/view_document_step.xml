@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/dimensionMarginSmall"
+    android:paddingEnd="@dimen/dimensionMarginSmall"
+    tools:ignore="UseCompoundDrawables">
+
+    <TextView
+        android:id="@+id/view_document_step_caption"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_margin="@dimen/dimensionMarginSmall"
+        android:fontFamily="@string/font_family_light"
+        android:textColor="@android:color/white"
+        tools:text="@tools:sample/lorem"/>
+
+    <ImageView
+        android:id="@+id/view_document_step_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:contentDescription="@android:string/untitled"
+        android:layout_marginBottom="@dimen/dimensionMarginSmall"
+        tools:srcCompat="@tools:sample/backgrounds/scenic"/>
+
+
+</LinearLayout>

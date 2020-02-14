@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:gravity="center"
+    android:background="@drawable/img_gradient_primary"
+    android:orientation="vertical"
+    android:padding="@dimen/dimensionMarginSmall">
+
+        <TextView
+            android:id="@+id/fragment_privacy_policy_caption"
+            android:textSize="@dimen/dimensionTextSizeHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dimensionMarginBig"
+            android:layout_marginBottom="@dimen/dimensionMarginBig"
+            android:gravity="center_horizontal"
+            android:text="@string/legal_privacy_caption"
+            android:textColor="@color/colorPrimary" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/fragment_privacy_policy_image"
+            android:layout_gravity="center"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_marginBottom="@dimen/dimensionMarginBig"
+            android:src="@drawable/outline_phonelink_lock_24"/>
+
+        <TextView
+            android:id="@+id/fragment_privacy_policy_description"
+            android:textSize="@dimen/dimensionTextSizeHeaderSecondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dimensionMarginBig"
+            android:layout_marginBottom="@dimen/dimensionMarginNormal"
+            android:gravity="center_horizontal"
+            android:text="@string/legal_privacy_description"
+            android:textColor="@color/colorPrimary" />
+
+    <TextView
+        android:id="@+id/fragment_privacy_policy_button"
+        android:textSize="@dimen/dimensionTextSizeHeaderSecondary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/dimensionMarginNormal"
+        android:layout_marginBottom="@dimen/dimensionMarginSmall"
+        android:gravity="center_horizontal"
+        android:text="@string/legal_privacy_button"
+        android:textColor="@android:color/holo_blue_bright" />
+
+    <TextView
+        android:id="@+id/fragment_privacy_terms_of_use"
+        android:textSize="@dimen/dimensionTextSizeHeaderSecondary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/dimensionMarginBig"
+        android:gravity="center_horizontal"
+        android:text="@string/legal_terms_conditions"
+        android:textColor="@android:color/holo_blue_bright" />
+
+</LinearLayout>

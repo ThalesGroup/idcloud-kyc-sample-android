@@ -1,0 +1,45 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layoutLegal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/img_gradient_primary"
+    android:orientation="vertical"
+    android:padding="@dimen/dimensionMarginSmall">
+
+    <TextView
+        android:id="@+id/fragment_terms_and_conditions_caption"
+        android:textSize="@dimen/dimensionTextSizeHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:gravity="center_horizontal"
+        android:text="@string/legal_terms_conditions"
+        android:textColor="@color/colorPrimary" />
+
+    <TextView
+        android:id="@+id/fragment_terms_and_conditions_description_1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/dimensionMarginSmall"
+        android:layout_marginBottom="@dimen/dimensionMarginSmall"
+        android:gravity="center_horizontal"
+        android:text="@string/legal_userAgreementDescription"
+        android:textColor="@color/colorPrimary" />
+
+    <ScrollView
+        android:id="@+id/fragment_terms_and_conditions_description_2"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:text="@string/legal_agrements"
+            android:textColor="@color/colorPrimary"
+            android:textStyle="italic" />
+
+    </ScrollView>
+
+</LinearLayout>

@@ -1,0 +1,49 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "com.thalesgroup.kyc.idv"
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 8
+        versionName "1.0"
+        testInstrumentationRunner "androidx.move_in_from_left.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation 'com.android.support:support-vector-drawable:28.0.0'
+    implementation 'com.android.support:support-vector-drawable:28.0.0'
+    implementation 'com.madgag.spongycastle:core:1.58.0.0'
+
+    // JNA lib
+    implementation 'net.java.dev.jna:jna:4.5.0@aar'
+
+    // UI Style
+    implementation project(':idcloudstyle')
+
+    // IDV
+    implementation(name:'IDV_Doc-release', ext:'aar')
+    releaseImplementation(name:'IDV_Face_NT-release', ext:'aar')
+    debugImplementation(name:'IDV_Face_NT-debug', ext:'aar')
+
+    // JWTDecode
+    implementation 'com.auth0.android:jwtdecode:1.4.0'
+}

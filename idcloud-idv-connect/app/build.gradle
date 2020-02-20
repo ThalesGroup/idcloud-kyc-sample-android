@@ -41,16 +41,18 @@ dependencies {
     implementation project(':idcloudstyle')
 
     // Acuant
-    implementation 'com.acuant:acuantcommon:11.2.5'
-    implementation 'com.acuant:acuantcamera:11.2.5'
-    implementation 'com.acuant:acuantimagepreparation:11.2.5'
-    implementation 'com.acuant:acuantdocumentprocessing:11.2.5'
-    implementation 'com.acuant:acuantechipreader:11.2.5'
-    implementation 'com.acuant:acuantfacematch:11.2.5'
-    implementation 'com.acuant:acuanthgliveness:11.2.5'
-    implementation ('com.acuant:acuantipliveness:11.2.5'){
+    implementation 'com.acuant:acuantcommon:11.3.0'
+    implementation 'com.acuant:acuantcamera:11.3.0'
+    implementation 'com.acuant:acuantimagepreparation:11.3.0@aar'
+    implementation 'com.acuant:acuantdocumentprocessing:11.3.0'
+    implementation 'com.acuant:acuantechipreader:11.3.0'
+    implementation 'com.acuant:acuantfacematch:11.3.0'
+    implementation 'com.acuant:acuanthgliveness:11.3.0'
+    implementation ('com.acuant:acuantipliveness:11.3.0'){
         transitive = true
     }
+    implementation 'com.acuant:acuantfacecapture:11.3.0'
+    implementation 'com.acuant:acuantpassiveliveness:11.3.0'
 
     // JWTDecode
     implementation 'com.auth0.android:jwtdecode:1.4.0'

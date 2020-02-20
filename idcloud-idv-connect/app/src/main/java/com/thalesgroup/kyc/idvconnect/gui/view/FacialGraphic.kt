@@ -1,4 +1,4 @@
-package com.acuant.sampleapp.facecapture
+package com.thalesgroup.kyc.idvconnect.gui.view
 
 import android.graphics.Canvas
 import android.graphics.Color
@@ -15,21 +15,22 @@ internal class FacialGraphic
 //==============================================================================================
 
 (overlay: FacialGraphicOverlay) : FacialGraphicOverlay.Graphic(overlay) {
-    private val mFaceRectPaint: Paint
 
     @Volatile private var face: Face? = null
+    private val mFaceRectPaint: Paint = Paint()
 
     init {
-        mFaceRectPaint = Paint()
         mFaceRectPaint.color = Color.GREEN
         mFaceRectPaint.style = Paint.Style.STROKE
         mFaceRectPaint.strokeWidth = 10f
+        mFaceRectPaint.strokeCap = Paint.Cap.ROUND
     }
 
     /**
      * Updates the eye positions and state from the detection of the most recent frame.  Invalidates
      * the relevant portions of the overlay to trigger a redraw.
      */
+    @Suppress("unused")
     fun updateLiveFaceDetails(liveFaceDetails: LiveFaceDetails) {
         face = liveFaceDetails.face
         postInvalidate()
@@ -47,7 +48,7 @@ internal class FacialGraphic
     }
 
     private fun drawFaceOval(canvas: Canvas) {
-        if(face!=null) {
+        if (face != null) {
 
             val centerX = translateX(face!!.position.x + face!!.width / 2f)
             val centerY = translateY(face!!.position.y + face!!.height / 2f)
@@ -62,9 +63,5 @@ internal class FacialGraphic
 
             canvas.drawOval(left, top, right, bottom, mFaceRectPaint)
         }
-    }
-
-    companion object {
-        private val EYE_RADIUS_PROPORTION = 0.45f
     }
 }

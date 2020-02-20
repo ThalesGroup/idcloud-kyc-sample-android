@@ -1,4 +1,4 @@
-package com.thalesgroup.kyc
+package com.thalesgroup.kyc.idvconnect.gui.activity
 
 import android.Manifest
 import android.app.AlertDialog
@@ -6,6 +6,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -13,20 +14,19 @@ import androidx.core.app.ActivityCompat
 import com.acuant.acuanthgliveness.detector.LiveFaceDetector
 import com.acuant.acuanthgliveness.detector.LiveFaceListener
 import com.acuant.acuanthgliveness.detector.LiveFaceProcessor
-import com.acuant.acuanthgliveness.detector.LiveFaceProcessor.ACUANT_CAMERA_SOURCE_HEIGHT
-import com.acuant.acuanthgliveness.detector.LiveFaceProcessor.ACUANT_CAMERA_SOURCE_WIDTH
 import com.acuant.acuanthgliveness.model.FaceCapturedImage
 import com.acuant.acuanthgliveness.model.LiveFaceDetails
-import com.acuant.sampleapp.facecapture.CameraSourcePreview
-import com.acuant.sampleapp.facecapture.FacialGraphic
-import com.acuant.sampleapp.facecapture.FacialGraphicOverlay
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.vision.CameraSource
 import com.google.android.material.snackbar.Snackbar
 import com.thalesgroup.kyc.idvconnect.R
+import com.thalesgroup.kyc.idvconnect.gui.view.CameraSourcePreview
+import com.thalesgroup.kyc.idvconnect.gui.view.FacialGraphic
+import com.thalesgroup.kyc.idvconnect.gui.view.FacialGraphicOverlay
 import java.io.IOException
 import kotlin.concurrent.thread
+
 
 class FacialLivenessActivity : AppCompatActivity(), LiveFaceListener {
 
@@ -35,7 +35,6 @@ class FacialLivenessActivity : AppCompatActivity(), LiveFaceListener {
     private var mFacialGraphicOverlay: FacialGraphicOverlay? = null
     private var mFacialGraphic: FacialGraphic? = null
     private var selfieCaptured = false
-    private var mIsLiveness = false
     private var liveFaceDetector : LiveFaceDetector? = null
     //==============================================================================================
     // Activity Methods
@@ -157,7 +156,7 @@ class FacialLivenessActivity : AppCompatActivity(), LiveFaceListener {
         Log.e(TAG, "Permission not granted: results len = " + grantResults.size +
                 " Result code = " + if (grantResults.size > 0) grantResults[0] else "(empty)")
 
-        val listener = DialogInterface.OnClickListener { _, _ -> finish() }
+        val listener = DialogInterface.OnClickListener { _, id -> finish() }
 
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Face Tracker sample")
@@ -170,6 +169,13 @@ class FacialLivenessActivity : AppCompatActivity(), LiveFaceListener {
     // UI
     //==============================================================================================
 
+    /**
+     * Saves the camera facing mode, so that it can be restored after the device is rotated.
+     */
+    override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
+        super.onSaveInstanceState(outState, outPersistentState)
+    }
+
     //==============================================================================================
     // Camera Source
     //==============================================================================================
@@ -177,6 +183,7 @@ class FacialLivenessActivity : AppCompatActivity(), LiveFaceListener {
     /**
      * Creates the face detector and the camera.
      */
+
     private fun createCameraSource() {
         val context = applicationContext
         liveFaceDetector = LiveFaceProcessor.initLiveFaceDetector(context, this)
@@ -189,14 +196,13 @@ class FacialLivenessActivity : AppCompatActivity(), LiveFaceListener {
         // camera resolution.  The face detector will run faster with lower camera resolutions,
         // but may miss smaller faces, landmarks, or may not correctly detect eyes open/closed in
         // comparison to using higher camera resolutions.  If you have any of these issues, you may
+
         // want to increase the resolution.
         mCameraSource = CameraSource.Builder(context, liveFaceDetector)
                 .setFacing(facing)
-                .setRequestedPreviewSize(ACUANT_CAMERA_SOURCE_WIDTH, ACUANT_CAMERA_SOURCE_HEIGHT)
-                .setRequestedFps(60.0f)
+                .setRequestedFps(10.0f)
                 .setAutoFocusEnabled(true)
                 .build()
-
     }
 
     /**
@@ -227,19 +233,17 @@ class FacialLivenessActivity : AppCompatActivity(), LiveFaceListener {
 
     override fun liveFaceDetailsCaptured(liveFaceDetails: LiveFaceDetails) {
         if (liveFaceDetails.error == null) {
+            mFacialGraphicOverlay!!.setState(liveFaceDetails.state)
             mFacialGraphicOverlay!!.add(mFacialGraphic!!)
             mFacialGraphic!!.updateLiveFaceDetails(liveFaceDetails)
-            if(liveFaceDetails.isLiveFace || mIsLiveness){
-                mIsLiveness = true
-                if(selfieCaptured == false) {
-                    if (liveFaceDetails.face.isLeftEyeOpenProbability > 0.85 && liveFaceDetails.face.isRightEyeOpenProbability > 0.85) {
-                        selfieCaptured = true
-                        thread() {
-                            FaceCapturedImage.setImage(liveFaceDetails.image)
-                            val result = Intent()
-                            this@FacialLivenessActivity.setResult(RESPONSE_SUCCESS_CODE, result)
-                            this@FacialLivenessActivity.finish()
-                        }
+            if(liveFaceDetails.isLiveFace){
+                if(!selfieCaptured) {
+                    selfieCaptured = true
+                    thread {
+                        FaceCapturedImage.setImage(liveFaceDetails.image)
+                        val result = Intent()
+                        this@FacialLivenessActivity.setResult(RESPONSE_SUCCESS_CODE, result)
+                        this@FacialLivenessActivity.finish()
                     }
                 }
             }

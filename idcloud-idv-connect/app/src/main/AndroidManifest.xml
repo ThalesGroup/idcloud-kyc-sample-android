@@ -44,7 +44,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="com.thalesgroup.kyc.FacialLivenessActivity" />
+        <activity android:name="com.thalesgroup.kyc.idvconnect.gui.activity.FacialLivenessActivity"
+            android:screenOrientation="portrait"/>
     </application>
 
 </manifest>

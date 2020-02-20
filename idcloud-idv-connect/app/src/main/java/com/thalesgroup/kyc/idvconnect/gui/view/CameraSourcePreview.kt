@@ -1,4 +1,4 @@
-package com.acuant.sampleapp.facecapture
+package com.thalesgroup.kyc.idvconnect.gui.view
 
 import android.content.Context
 import android.content.res.Configuration

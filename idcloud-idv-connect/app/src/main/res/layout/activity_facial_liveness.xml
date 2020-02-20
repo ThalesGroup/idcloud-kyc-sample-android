@@ -8,16 +8,16 @@
     android:layout_height="match_parent"
     android:keepScreenOn="true">
 
-    <com.acuant.sampleapp.facecapture.CameraSourcePreview
+    <com.thalesgroup.kyc.idvconnect.gui.view.CameraSourcePreview
         android:id="@+id/preview"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.acuant.sampleapp.facecapture.FacialGraphicOverlay
+        <com.thalesgroup.kyc.idvconnect.gui.view.FacialGraphicOverlay
             android:id="@+id/faceOverlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-    </com.acuant.sampleapp.facecapture.CameraSourcePreview>
+    </com.thalesgroup.kyc.idvconnect.gui.view.CameraSourcePreview>
 
 </RelativeLayout>

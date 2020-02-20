@@ -27,7 +27,6 @@
 
 package com.thalesgroup.kyc.idvconnect.helpers.communication;
 
-import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 

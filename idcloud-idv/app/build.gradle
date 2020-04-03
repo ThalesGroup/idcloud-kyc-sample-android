@@ -6,7 +6,7 @@ android {
         applicationId "com.thalesgroup.kyc.idv"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 8
+        versionCode 14
         versionName "1.0"
         testInstrumentationRunner "androidx.move_in_from_left.runner.AndroidJUnitRunner"
     }
@@ -24,7 +24,7 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir:'libs', include: ['*.jar'])
     implementation 'com.android.support:support-v4:28.0.0'
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support:design:28.0.0'
@@ -39,6 +39,9 @@ dependencies {
     // UI Style
     implementation project(':idcloudstyle')
 
+    // QR Code Scanner
+    implementation 'me.dm7.barcodescanner:zxing:1.9.8'
+
     // IDV
     implementation(name:'IDV_Doc-release', ext:'aar')
     releaseImplementation(name:'IDV_Face_NT-release', ext:'aar')
@@ -47,3 +50,4 @@ dependencies {
     // JWTDecode
     implementation 'com.auth0.android:jwtdecode:1.4.0'
 }
+

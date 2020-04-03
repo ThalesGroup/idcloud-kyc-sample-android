@@ -32,6 +32,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.text.InputType;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -46,6 +47,7 @@ import com.thalesgroup.kyc.idv.R;
 import com.thalesgroup.kyc.idv.gui.MainActivity;
 import com.thalesgroup.kyc.idv.gui.animation.EaseInterpolators;
 import com.thalesgroup.kyc.idv.gui.fragment.FragmentPrivacyPolicy;
+import com.thalesgroup.kyc.idv.gui.fragment.FragmentQRCodeReader;
 
 import net.gemalto.mcidsdk.CaptureSDK;
 
@@ -63,7 +65,7 @@ import androidx.appcompat.app.AlertDialog;
  * Utility methods.
  */
 @SuppressWarnings({"WeakerAccess", "SameParameterValue", "FieldCanBeLocal"})
-public class KYCManager {
+public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
 
     //region Definition
 
@@ -80,7 +82,9 @@ public class KYCManager {
 
     // GeneralSettings
     private final static String KEY_FACIAL_RECOGNITION = "KycPreferenceKeyFacalRecognition";
-    private final static String KEY_JSON_WEB_TOKEN = "KycPreferenceKeyJsonWebToken";
+    private static final String KEY_MAX_PICTURE_WIDTH = "KycPreferenceKeyMaxPictureWidth";
+    private final static String KEY_JSON_WEB_TOKEN = "KycPreferenceKeyJsonWebTokenV2";
+    private final static String KEY_API_KEY = "KycPreferenceKeyApiKeyV2";
 
     // RiskManagement
     private final static String KEY_EXPIRATION_DATE = "KycPreferenceKeyExpirationDate";
@@ -202,7 +206,7 @@ public class KYCManager {
 
                 new AbstractOption.Button(AbstractOption.OptionSection.Version,
                         mContext.getString(R.string.STRING_KYC_OPTION_WEB_TOKEN),
-                        this::openJsonWebTokenUpdate),
+                        this::displayQRcodeScannerForInit),
 
                 new AbstractOption.Button(AbstractOption.OptionSection.Version,
                         mContext.getString(R.string.legal_privacy_policy),
@@ -385,30 +389,14 @@ public class KYCManager {
         activity.displayFragment(new FragmentPrivacyPolicy(), true, true);
     }
 
-    private void openJsonWebTokenUpdate() {
-        // Main alert builder.
-        final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-        builder.setTitle(R.string.STRING_JSON_WEB_TOKEN_CAP);
-        builder.setMessage(R.string.STRING_JSON_WEB_TOKEN_DES);
+    public void displayQRcodeScannerForInit() {
+        // Display QR code reader with current view as delegate.
+        final FragmentQRCodeReader fragment = new FragmentQRCodeReader();
+        fragment.init(this, 0);
 
-        final EditText input = new EditText(mContext);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(input);
-
-        // Set up the buttons
-        builder.setPositiveButton("OK", (dialog, which) -> {
-            if (this.setJsonWebToken(input.getText().toString())) {
-                final MainActivity activity = (MainActivity) mContext;
-                activity.reloadDrawerData(getOptions());
-            } else {
-                Toast.makeText(this.mContext, R.string.STRING_JSON_WEB_TOKEN_INVALID, Toast.LENGTH_LONG).show();
-            }
-        });
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
-
-        builder.show();
+        final MainActivity activity = (MainActivity) mContext;
+        activity.displayFragment(fragment, true, true);
     }
-
     /**
      * Gets the list of side menu options.
      *
@@ -478,6 +466,22 @@ public class KYCManager {
         return getValueBoolean(KEY_FACIAL_RECOGNITION, true);
     }
 
+    public int getMaxImageWidth() {
+        return getValueInt(KEY_MAX_PICTURE_WIDTH, 1024);
+    }
+
+    private boolean setMaxImageWidth(final int value) {
+        return setValue(KEY_MAX_PICTURE_WIDTH, value);
+    }
+
+    public String getApiKey() {
+        return getValueString(KEY_API_KEY, null);
+    }
+
+    private void setApiKey(final String apiKey) {
+        setValue(KEY_API_KEY, apiKey);
+    }
+
     private boolean setJsonWebToken(final String value) {
         if (getJWTExpiration(value) != null) {
             return setValue(KEY_JSON_WEB_TOKEN, value);
@@ -488,7 +492,7 @@ public class KYCManager {
     }
 
     public String getJsonWebToken() {
-        return getValueString(KEY_JSON_WEB_TOKEN, Configuration.JSON_WEB_TOKEN_DEFAULT);
+        return getValueString(KEY_JSON_WEB_TOKEN, null);
     }
 
     //endregion
@@ -582,6 +586,48 @@ public class KYCManager {
 
     public int getFaceBlinkTimeout() {
         return getValueInt(KEY_FACE_BLINK_TIMEOUT, 15);
+    }
+
+    //endregion
+
+    //region QRCodeReaderDelegate
+
+    private void hideQRWithMessage(final String message) {
+        final MainActivity activity = (MainActivity) mContext;
+        activity.getSupportFragmentManager().popBackStack();
+        activity.onDataLayerChanged(getOptions());
+        Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onQRCodeFinished(final FragmentQRCodeReader sender,
+                                 final String qrCodeData,
+                                 final String error) {
+        // Something went wrong on scanner side.
+        if (error != null) {
+            hideQRWithMessage(error);
+        } else {
+            // QR Code format is "kyc:<apikey>:<jwt>"
+            final String[] elements = qrCodeData.split(":");
+            if (elements.length == 3 && "kyc".equals(elements[0])) {
+                if (elements[1].isEmpty() || elements[2].isEmpty()) {
+                    Log.i("QR Scann", mContext.getString(R.string.STRING_QR_CODE_ERROR_INVALID_DATA));
+                    sender.continueScanning();
+                } else if (!setJsonWebToken(elements[2])) {
+                    Log.i("QR Scann", mContext.getString(R.string.STRING_QR_CODE_ERROR_INVALID_JWT));
+                    sender.continueScanning();
+                } else {
+                    // JWT is already set by previous IF case, now we have to store rest.
+                    setApiKey(elements[1]);
+                    // Display status information.
+                    hideQRWithMessage(mContext.getString(R.string.STRING_QR_CODE_INFO_DONE));
+                }
+            } else {
+                Log.i("QR Scann", mContext.getString(R.string.STRING_QR_CODE_ERROR_FAILED));
+                sender.continueScanning();
+            }
+        }
+
     }
 
     //endregion

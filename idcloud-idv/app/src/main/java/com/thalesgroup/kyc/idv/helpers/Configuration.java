@@ -55,11 +55,6 @@ public class Configuration {
     final static String SERVER_URL = "";
 
     /**
-     * Default value for IdCloud communication web token. It can be updated from app menu.
-     */
-    final static String JSON_WEB_TOKEN_DEFAULT = "";
-
-    /**
      * URL to company privacy policy.
      */
     public final static String PRIVACY_POLICY_URL = "";

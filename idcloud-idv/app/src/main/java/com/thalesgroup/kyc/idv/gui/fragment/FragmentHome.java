@@ -31,10 +31,19 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 
 import com.thalesgroup.kyc.idv.R;
+import com.thalesgroup.kyc.idv.helpers.KYCManager;
 
+/**
+ * Home {@code Fragment}.
+ */
 public class FragmentHome extends AbstractFragmentBase {
+
+    private Button mButtonNext;
+    private TextView mTextInit;
 
     //region Life Cycle
 
@@ -43,8 +52,10 @@ public class FragmentHome extends AbstractFragmentBase {
                              final ViewGroup container,
                              final Bundle savedInstanceState) {
         final View retValue = inflater.inflate(R.layout.fragment_home, container, false);
-        retValue.findViewById(R.id.fragment_home_button_next).setOnClickListener(view ->onButtonClickNext());
 
+        mButtonNext = retValue.findViewById(R.id.fragment_home_button_next);
+        mButtonNext.setOnClickListener(view -> onButtonClickNext());
+        mTextInit = retValue.findViewById(R.id.fragment_home_text_init);
 
         return retValue;
     }
@@ -63,12 +74,32 @@ public class FragmentHome extends AbstractFragmentBase {
         getMainActivity().enableDrawer(false);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if (KYCManager.getInstance().getJsonWebToken() != null) {
+            mTextInit.setVisibility(View.GONE);
+            mButtonNext.setText(R.string.fragment_home_button_enroll);
+        } else {
+            mTextInit.setVisibility(View.VISIBLE);
+            mButtonNext.setText(R.string.fragment_home_button_scann);
+        }
+    }
+
     //endregion
 
     //region User Interface
 
+    /**
+     * On click listener for the next button.
+     */
     private void onButtonClickNext() {
-        getMainActivity().displayFragment(new FragmentFirstStep(), true, true);
+        if (KYCManager.getInstance().getJsonWebToken() != null) {
+            getMainActivity().displayFragment(new FragmentFirstStep(), true, true);
+        } else {
+            KYCManager.getInstance().displayQRcodeScannerForInit();
+        }
     }
 
     //endregion

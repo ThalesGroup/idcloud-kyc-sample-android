@@ -2,7 +2,7 @@
 
 <!--MIT License-->
 
-<!--Copyright (c) 2019 Thales DIS-->
+<!--Copyright (c) 2020 Thales DIS-->
 
 <!--Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated-->
 <!--documentation files (the "Software"), to deal in the Software without restriction, including without limitation the-->
@@ -61,6 +61,15 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_weight="10"/>
+
+    <TextView
+        android:id="@+id/fragment_home_text_init"
+        android:layout_margin="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/fragment_home_text_init"
+        android:textColor="@color/idCloudRed"/>
 
     <Button
         android:id="@+id/fragment_home_button_next"

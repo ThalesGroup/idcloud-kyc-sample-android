@@ -227,7 +227,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         transition.commit();
     }
 
-    public void reloadDrawerData(final List<AbstractOption> navItems) {
+    public void onDataLayerChanged(final List<AbstractOption> navItems) {
         mOptionAdapter.updateWithItems(navItems);
     }
 

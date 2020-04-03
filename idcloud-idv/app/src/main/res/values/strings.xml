@@ -39,6 +39,8 @@
     <string name="doc_scan_warning_fit">Document not detected</string>
 
     <!--UI-->
+    <string name="fragment_home_text_init">Application requires JWT and API key to be configured. Please scanne given QR Code.</string>
+    <string name="fragment_home_button_scann">QR Code Scanner</string>
     <string name="fragment_home_button_enroll">OnBoard</string>
 
     <string name="fragment_first_step_caption">Mybank ID Verification</string>
@@ -101,7 +103,7 @@
 
     <!-- Options-->
     <string name="STRING_KYC_OPTION_SECTION_GENERAL">General settings</string>
-    <string name="STRING_KYC_OPTION_WEB_TOKEN">Update JSON Web Token</string>
+    <string name="STRING_KYC_OPTION_WEB_TOKEN">Scan QR Code</string>
     <string name="STRING_KYC_OPTION_FACE_REC_CAP">Facial recognition</string>
     <string name="STRING_KYC_OPTION_FACE_REC_DES">Take a selfie after ID verification step.\nThe facial recognition is done by a server.</string>
 
@@ -216,4 +218,11 @@
     <string name="STRING_JSON_WEB_TOKEN_INVALID">"Invalid JWT. Value was not stored."</string>
     <string name="STRING_JSON_WEB_TOKEN_EXPIRATION">"JWT Expiration"</string>
     <string name="STRING_JSON_WEB_TOKEN_NO_EXPIRATION">"Failed to get expiration date."</string>
+
+    <!--QR Code Parser-->
+    <string name="STRING_QR_CODE_ERROR_FAILED">"Failed to parse QR Code"</string>
+    <string name="STRING_QR_CODE_ERROR_INVALID_DATA">"Invalid QR Code data"</string>
+    <string name="STRING_QR_CODE_ERROR_INVALID_JWT">"Invalid JWT"</string>
+    <string name="STRING_QR_CODE_INFO_DONE">"Values updated"</string>
+
 </resources>

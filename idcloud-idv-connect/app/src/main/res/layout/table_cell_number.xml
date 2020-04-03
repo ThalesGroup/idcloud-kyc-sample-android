@@ -53,13 +53,16 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="horizontal">
+
             <SeekBar
                 android:id="@+id/table_cell_number_value_slider"
-                android:layout_weight="1"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content" />
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true" />
             <TextView android:id="@+id/table_cell_number_value"
-                android:layout_width="30dp"
+                android:layout_width="50dp"
                 android:layout_height="wrap_content"
                 android:layout_margin="@dimen/dimensionMarginSmall"
                 android:text="100"/>

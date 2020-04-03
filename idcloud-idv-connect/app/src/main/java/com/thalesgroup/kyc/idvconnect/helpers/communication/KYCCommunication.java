@@ -296,6 +296,7 @@ public class KYCCommunication {
         connection.addRequestProperty("Accept", "application/json");
         connection.addRequestProperty("Content-Type", "application/json");
         connection.addRequestProperty("Authorization", "Bearer " + KYCManager.getInstance().getJsonWebToken());
+        connection.addRequestProperty("X-API-KEY", KYCManager.getInstance().getApiKey());
 
         return connection;
     }

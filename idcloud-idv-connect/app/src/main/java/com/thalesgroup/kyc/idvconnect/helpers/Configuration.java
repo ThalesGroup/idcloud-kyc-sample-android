@@ -30,11 +30,6 @@ public final class Configuration {
     public static final String IDCLOUD_URL = "";
 
     /**
-     * Default value for IdCloud communication web token. It can be updated from app menu.
-     */
-    final static String JSON_WEB_TOKEN_DEFAULT = "";
-
-    /**
      * Acuant account username.
      */
     public final static String ACUANT_USERNAME = "";
@@ -48,21 +43,6 @@ public final class Configuration {
      * Acuant account subscription id.
      */
     public final static String ACUANT_SUBSCRIPTION_ID = "";
-
-    /**
-     * Acuant facial recognition endpoint url.
-     */
-    public final static String ACUANT_FRM_ENDPOINT = "";
-
-    /**
-     * Acuant Document Authentication & Identity Verification endpoint url.
-     */
-    public final static String ACUANT_ASSURE_ID_ENDPOINT = "";
-
-    /**
-     * Acuant mediscan endpoint url.
-     */
-    public final static String ACUANT_MEDISCAN_ENDPOINT = "";
 
     /**
      * URL to company privacy policy.

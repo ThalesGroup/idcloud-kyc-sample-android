@@ -98,17 +98,11 @@ public class ImageUtil {
      *         Input image.
      * @return Output image.
      */
-    public static Bitmap cropImage(final byte[] imageBytes) {
+    public static Image cropImage(final byte[] imageBytes) {
         final Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
         final CroppingData data = new CroppingData();
         data.image = bitmap;
-        final Image image = AcuantImagePreparation.crop(data);
-        if (image.image != null) {
-            AcuantImagePreparation.sharpness(image.image);
-            AcuantImagePreparation.glare(image.image);
-        }
-
-        return image.image;
+        return AcuantImagePreparation.crop(data);
     }
 
     /**

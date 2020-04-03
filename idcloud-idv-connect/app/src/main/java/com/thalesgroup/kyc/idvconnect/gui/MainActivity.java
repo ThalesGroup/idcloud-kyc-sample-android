@@ -49,7 +49,9 @@ import com.acuant.acuantcommon.initializer.IAcuantPackageCallback;
 import com.acuant.acuantcommon.model.Credential;
 import com.acuant.acuantcommon.model.Error;
 import com.acuant.acuantcommon.model.ErrorCodes;
+import com.acuant.acuantcommon.model.Image;
 import com.acuant.acuanthgliveness.model.FaceCapturedImage;
+import com.acuant.acuantimagepreparation.AcuantImagePreparation;
 import com.acuant.acuantimagepreparation.initializer.ImageProcessorInitializer;
 import com.google.android.material.navigation.NavigationView;
 import com.thalesgroup.kyc.idvconnect.R;
@@ -82,6 +84,14 @@ import androidx.fragment.app.FragmentTransaction;
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     //region Definition
+
+    private final static String ACUANT_FRM_ENDPOINT = "https://frm.acuant.eu";
+    private final static String ACUANT_ASSURE_ID_ENDPOINT = "https://services.assureid.eu";
+    private final static String ACUANT_MEDISCAN_ENDPOINT = "https://medicscan.acuant.eu";
+
+    private static int SHARPNESS_THRESHOLD = 50;
+    private static int GLARE_THRESHOLD = 50;
+    private static int MANDATORY_RESOLUTION_THRESHOLD_SMALL = 400;
 
     public static final int ANIM_DURATION_SLOW_MS = 1500;
     public static final String BUNDLE_ARGUMENT_DOC_TYPE = "doc_type";
@@ -181,9 +191,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Credential.init(Configuration.ACUANT_USERNAME,
                 Configuration.ACUANT_PASSWORD,
                 Configuration.ACUANT_SUBSCRIPTION_ID,
-                Configuration.ACUANT_FRM_ENDPOINT,
-                Configuration.ACUANT_ASSURE_ID_ENDPOINT,
-                Configuration.ACUANT_MEDISCAN_ENDPOINT);
+                ACUANT_FRM_ENDPOINT,
+                ACUANT_ASSURE_ID_ENDPOINT,
+                ACUANT_MEDISCAN_ENDPOINT);
         final List<IAcuantPackage> list = new ArrayList<>();
         list.add(new ImageProcessorInitializer());
         try {
@@ -196,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 @Override
                 public void onInitializeFailed(final List<? extends Error> list) {
                     Toast.makeText(MainActivity.this, "Error: " + list.get(0).errorDescription,
-                                   Toast.LENGTH_LONG).show();
+                            Toast.LENGTH_LONG).show();
                 }
             });
         } catch (final AcuantException e) {
@@ -204,21 +214,47 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    private void tryAgainWithMessage(final String message) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Try Again");
+        builder.setMessage(message);
+        builder.setPositiveButton("Try Again", (dialog, which) -> {
+            openDocScanActivity(AbstractOption.DocumentType.IdCard);
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
     /**
      * Handles the {@link this#onActivityResult} method in case of scanning of document.
      *
      * @param resultCode Result code from document scanning.
-     * @param data Data received from document scanning.
+     * @param data       Data received from document scanning.
      */
     private void onActivityResultDocument(final int resultCode, final Intent data) {
         if (resultCode == AcuantCameraActivity.RESULT_SUCCESS_CODE) {
             final String fileUrl = data.getStringExtra(Constants.ACUANT_EXTRA_IMAGE_URL);
             final byte[] imageBytes = ImageUtil.readFile(fileUrl);
-            new Thread(()->{
-                final Bitmap croppedImage = ImageUtil.cropImage(imageBytes);
-                final Bitmap resizedImage = ImageUtil.resize(croppedImage, 640);
-                final byte[] imageBytesResized = ImageUtil.bitmapToBytes(resizedImage);
-                runOnUiThread(()-> {
+            final Image croppedImage = ImageUtil.cropImage(imageBytes);
+            if (croppedImage.image == null || (croppedImage.error != null && croppedImage.error.errorCode == ErrorCodes.ERROR_LowResolutionImage)) {
+                tryAgainWithMessage(croppedImage.error.errorDescription);
+            } else {
+                final Integer sharpness = AcuantImagePreparation.sharpness(croppedImage.image);
+                final Integer glare = AcuantImagePreparation.glare(croppedImage.image);
+                if (sharpness <  SHARPNESS_THRESHOLD || glare < GLARE_THRESHOLD ||
+                        croppedImage.dpi < MANDATORY_RESOLUTION_THRESHOLD_SMALL) {
+                    final String message = "Image did not meet basic criteria.\nSharpness: "
+                            + sharpness + "(" + SHARPNESS_THRESHOLD + ")\nGlare: "
+                            + glare + "(" + GLARE_THRESHOLD + ")\nDPI: "
+                            + croppedImage.dpi + "(" + MANDATORY_RESOLUTION_THRESHOLD_SMALL + ")";
+                    tryAgainWithMessage(message);
+                } else {
+                    // Limit maximum image resolution.
+                    Bitmap croppedBmp = croppedImage.image;
+                    if (croppedBmp.getWidth() > KYCManager.getInstance().getMaxImageWidth()) {
+                        croppedBmp = ImageUtil.resize(croppedBmp, KYCManager.getInstance().getMaxImageWidth());
+                    }
+                    final byte[] imageBytesResized = ImageUtil.bitmapToBytes(croppedBmp);
                     if (mFrontDocument) {
                         DataContainer.instance().mDocFront = imageBytesResized;
                         if (mDocumentType == AbstractOption.DocumentType.IdCard) {
@@ -236,8 +272,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             displayFragment(new FragmentKycOverview(), true, true);
                         }
                     }
-                });
-            }).run();
+                }
+            }
         } else {
             Toast.makeText(this, "Document capture failed.", Toast.LENGTH_LONG).show();
         }
@@ -300,9 +336,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     /**
      * Helper method which displays a {@code Fragment}.
      *
-     * @param fragment Fragment to display.
+     * @param fragment   Fragment to display.
      * @param addToStack {@code True} if {@code Fragment} should be added to backstack.
-     * @param animated {@code True} if {@code Fragment} should be added to backstack.
+     * @param animated   {@code True} if {@code Fragment} should be added to backstack.
      */
     public void displayFragment(final Fragment fragment,
                                 final boolean addToStack,
@@ -320,7 +356,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         transition.commit();
     }
 
-    public void reloadDrawerData(final List<AbstractOption> navItems) {
+    public void onDataLayerChanged(final List<AbstractOption> navItems) {
         mOptionAdapter.updateWithItems(navItems);
     }
 
@@ -414,7 +450,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * On click listener for menu button.
      */
     private void onButtonPressedMenu() {
-         mDrawer.openDrawer(Gravity.LEFT);
+        mDrawer.openDrawer(Gravity.LEFT);
     }
 
     //endregion

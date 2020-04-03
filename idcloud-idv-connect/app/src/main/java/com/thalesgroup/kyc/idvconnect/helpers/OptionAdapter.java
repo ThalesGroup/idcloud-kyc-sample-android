@@ -29,6 +29,8 @@ package com.thalesgroup.kyc.idvconnect.helpers;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -81,7 +83,7 @@ public class OptionAdapter extends BaseAdapter {
                 if (action == MotionEvent.ACTION_DOWN) {
                     // Disallow Drawer to intercept touch events.
                     v.getParent().requestDisallowInterceptTouchEvent(true);
-                } else {
+                } else if (action == MotionEvent.ACTION_UP) {
                     // Allow Drawer to intercept touch events.
                     v.getParent().requestDisallowInterceptTouchEvent(false);
                 }
@@ -332,11 +334,14 @@ public class OptionAdapter extends BaseAdapter {
                     }
                 }
         );
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            retValue.mValueSlider.setMin(0);
+        }
         retValue.mValueSlider.setMax(option.getMaxValue() - option.getMinValue());
         retValue.mValueSlider.setProgress(option.getValue(mContext));
         retValue.mValueSlider.setEnabled(enabled);
         // Update manually. If value is same as last time it's not triggered.
-        retValue.mValue.setText(String.valueOf(retValue.mValueSlider.getProgress()));
+        retValue.mValue.setText(String.valueOf(option.getMinValue() + retValue.mValueSlider.getProgress()));
 
         return retValue;
     }

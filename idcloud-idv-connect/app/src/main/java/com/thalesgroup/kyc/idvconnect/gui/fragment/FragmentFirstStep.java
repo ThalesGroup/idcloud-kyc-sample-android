@@ -71,7 +71,7 @@ import androidx.annotation.StringRes;
 /**
  * {@code Fragment} for the initial screen of the whole flow.
  */
-public class FragmentFirstStep extends AbstractFragmentBase {
+public class FragmentFirstStep extends AbstractFragmentBase  {
 
     //region Life Cycle
 

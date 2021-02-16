@@ -1,7 +1,9 @@
 package com.thalesgroup.kyc.idvconnect.helpers;
 
+import com.thalesgroup.kyc.idvconnect.helpers.communication.KYCCommunication;
+
 /**
- * Class to hold image data - document and face.
+ * Class to hold verification data.
  */
 public final class DataContainer {
 
@@ -9,11 +11,17 @@ public final class DataContainer {
 
     static private DataContainer sInstance = null;
 
-    // doc data IDV
+    // Doc data
     public byte[] mDocFront;
     public byte[] mDocBack;
-    public boolean mDocAutoSnapshot;
+
+    // Selfie data
     public byte[] mSelfie;
+    public String mEnhancedSelfieJson;
+
+    // Server session data
+    public int mVerificationStep = KYCCommunication.STEP_START_VERIFICATION;
+    public KYCCommunication mKYCCommunication;
 
     //endregion
 
@@ -33,6 +41,7 @@ public final class DataContainer {
     public synchronized static DataContainer instance() {
         if (sInstance == null) {
             sInstance = new DataContainer();
+            sInstance.mKYCCommunication = new KYCCommunication();
         }
 
         return sInstance;
@@ -49,7 +58,8 @@ public final class DataContainer {
         mDocFront = null;
         mDocBack = null;
         mSelfie = null;
-        mDocAutoSnapshot = false;
+        mEnhancedSelfieJson = null;
+        mVerificationStep = KYCCommunication.STEP_START_VERIFICATION;
     }
 
     //endregion

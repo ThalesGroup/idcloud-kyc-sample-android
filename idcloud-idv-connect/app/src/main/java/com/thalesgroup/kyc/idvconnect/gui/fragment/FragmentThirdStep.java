@@ -38,6 +38,7 @@ import android.widget.TextView;
 import com.thalesgroup.kyc.idvconnect.R;
 import com.thalesgroup.kyc.idvconnect.gui.MainActivity;
 import com.thalesgroup.kyc.idvconnect.helpers.AbstractOption;
+import com.thalesgroup.kyc.idvconnect.helpers.DataContainer;
 import com.thalesgroup.kyc.idvconnect.helpers.KYCManager;
 import com.thalesgroup.kyc.idvconnect.helpers.util.AssetHelper;
 
@@ -96,6 +97,8 @@ public class FragmentThirdStep extends AbstractFragmentBase {
         // User Interface
         buttonNext.setOnClickListener(view -> onButtonPressedNext());
 
+        DataContainer.instance().clearDocData();
+
         return retValue;
     }
 
@@ -132,9 +135,7 @@ public class FragmentThirdStep extends AbstractFragmentBase {
      * @return Asset.
      */
     private int labelForIndex(final int index) {
-        final boolean automatic = KYCManager.getInstance().isAutomaticTypeDetection();
-        final String mode = automatic ? "AUTO" : "MANUAL";
-        final String stringKey = String.format(Locale.ENGLISH,"STRING_KYC_DOC_SCAN_%02d_%s", index, mode);
+        final String stringKey = String.format(Locale.ENGLISH,"STRING_KYC_DOC_SCAN_%02d", index);
 
         return KYCManager.getResId(stringKey, R.string.class);
     }
@@ -147,11 +148,9 @@ public class FragmentThirdStep extends AbstractFragmentBase {
      * @return Image name.
      */
     private String imageForIndex(final int index) {
-        final boolean automatic = KYCManager.getInstance().isAutomaticTypeDetection();
         final String type = mDocumentType == AbstractOption.DocumentType.Passport ? "passport" : "id_card";
-        final String mode = automatic ? "auto" : "manual";
 
-        return String.format(Locale.ENGLISH,"kyc_third_step_%s_%02d_%s.png", type, index, mode);
+        return String.format(Locale.ENGLISH,"kyc_third_step_%s_%02d.png", type, index);
     }
 
     //endregion

@@ -15,6 +15,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/dimensionMarginBig"
         android:layout_marginBottom="@dimen/dimensionMarginBig"
+            android:layout_gravity="center"
         android:gravity="center_horizontal"
         android:text="@string/legal_privacy_caption"
         android:textColor="@color/colorPrimary" />

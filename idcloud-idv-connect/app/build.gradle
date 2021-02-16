@@ -8,9 +8,10 @@ android {
         applicationId "com.thalesgroup.kyc.idvconnect"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 14
-        versionName "1.0"
+        versionCode 321004
+        versionName "3.2.1-004"
         testInstrumentationRunner "androidx.move_in_from_left.runner.AndroidJUnitRunner"
+        ndkVersion '16.1.4479499'
     }
     buildTypes {
         release {
@@ -27,15 +28,18 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    api fileTree(dir: 'libs', include: ['*.aar'])
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'com.google.android.material:material:1.1.0'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
-    implementation 'com.google.android.gms:play-services-vision:19.0.0'
+    implementation 'com.google.android.gms:play-services-vision:20.1.2'
     implementation 'com.madgag.spongycastle:core:1.58.0.0'
-    implementation 'androidx.core:core-ktx:1.2.0'
+    implementation 'androidx.core:core-ktx:1.3.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    api 'com.squareup.okhttp3:okhttp:3.13.1'
 
     // UI Style
     implementation project(':idcloudstyle')
@@ -44,18 +48,15 @@ dependencies {
     implementation 'me.dm7.barcodescanner:zxing:1.9.8'
 
     // Acuant
-    implementation 'com.acuant:acuantcommon:11.3.1'
-    implementation 'com.acuant:acuantcamera:11.3.1'
-    implementation 'com.acuant:acuantimagepreparation:11.3.1@aar'
-    implementation 'com.acuant:acuantdocumentprocessing:11.3.1'
-    implementation 'com.acuant:acuantechipreader:11.3.1'
-    implementation 'com.acuant:acuantfacematch:11.3.1'
-    implementation 'com.acuant:acuanthgliveness:11.3.1'
-    implementation ('com.acuant:acuantipliveness:11.3.1'){
-        transitive = true
-    }
-    implementation 'com.acuant:acuantfacecapture:11.3.1'
-    implementation 'com.acuant:acuantpassiveliveness:11.3.1'
+    implementation 'com.acuant:acuantcommon:11.4.9'
+    implementation 'com.acuant:acuantcamera:11.4.9'
+    implementation 'com.acuant:acuantimagepreparation:11.4.9@aar'
+    implementation 'com.acuant:acuantdocumentprocessing:11.4.9'
+    implementation 'com.acuant:acuantechipreader:11.4.9'
+    implementation 'com.acuant:acuantfacematch:11.4.9'
+    implementation 'com.acuant:acuanthgliveness:11.4.9'
+    implementation 'com.acuant:acuantfacecapture:11.4.9'
+    implementation 'com.acuant:acuantpassiveliveness:11.4.9'
 
     // JWTDecode
     implementation 'com.auth0.android:jwtdecode:1.4.0'

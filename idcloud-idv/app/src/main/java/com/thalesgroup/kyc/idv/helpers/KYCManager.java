@@ -30,26 +30,21 @@ package com.thalesgroup.kyc.idv.helpers;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
-import android.text.InputType;
+import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.auth0.android.jwt.JWT;
-import com.gemalto.ekyc.EKycLicenseConfigurationListener;
-import com.gemalto.ekyc.EKycLicenseManager;
-import com.gemalto.ekyc.face_capture.FaceCaptureLivenessMode;
-import com.gemalto.ekyc.face_capture.FaceCaptureManager;
+import com.thalesgroup.idv.sdk.doc.api.CaptureSDK;
+import com.thalesgroup.idv.sdk.doc.api.Configuration;
 import com.thalesgroup.kyc.idv.BuildConfig;
 import com.thalesgroup.kyc.idv.R;
 import com.thalesgroup.kyc.idv.gui.MainActivity;
 import com.thalesgroup.kyc.idv.gui.animation.EaseInterpolators;
 import com.thalesgroup.kyc.idv.gui.fragment.FragmentPrivacyPolicy;
 import com.thalesgroup.kyc.idv.gui.fragment.FragmentQRCodeReader;
-
-import net.gemalto.mcidsdk.CaptureSDK;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -59,48 +54,42 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import androidx.annotation.IdRes;
-import androidx.appcompat.app.AlertDialog;
 
 /**
  * Utility methods.
  */
-@SuppressWarnings({"WeakerAccess", "SameParameterValue", "FieldCanBeLocal"})
+@SuppressWarnings({"WeakerAccess", "SameParameterValue"})
 public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
 
     //region Definition
+    public final static String LIVENESS_NO = "No liveness";
+    public final static String LIVENESS_ENHANCED = "Enhanced Passive";
 
     private static KYCManager sInstance;
 
     private Context mContext;
     private SharedPreferences mPreferences;
 
-    private boolean mFaceIdInitSuccess;
-    private Exception mFaceIdInitError;
-    private EKycLicenseConfigurationListener mFaceCompletion = null;
-
     private final static String SHARED_PREF_KEY = "KYCOptions";
 
     // GeneralSettings
     private final static String KEY_FACIAL_RECOGNITION = "KycPreferenceKeyFacalRecognition";
-    private static final String KEY_MAX_PICTURE_WIDTH = "KycPreferenceKeyMaxPictureWidth";
-    private final static String KEY_JSON_WEB_TOKEN = "KycPreferenceKeyJsonWebTokenV2";
-    private final static String KEY_API_KEY = "KycPreferenceKeyApiKeyV2";
+    private final static String KEY_BASIC_CREDENTIALS = "KycPreferenceKeyBasicCredentials";
+    private final static String KEY_BASE_URL = "KycPreferenceKeyBaseUrl";
+    private final static String KEY_KYC_QR_CODE_VERSION = "KycPreferenceKeyVersion";
 
-    // RiskManagement
-    private final static String KEY_EXPIRATION_DATE = "KycPreferenceKeyExpirationDate";
+    public final static String KYC_QR_CODE_VERSION_KYC2 = "kyc2";
 
     // DocumentScan
     private final static String KEY_MANUAL_SCAN = "KycPreferenceKeyManualScan";
-    private final static String KEY_AUTOMATIC_TYPE = "KycPreferenceKeyAutomaticType";
-    private final static String KEY_CAMERA_OTIENTATION = "KycPreferenceKeyCameraOrientation";
-    private final static String KEY_DETECTION_ZONE = "KycPreferenceKeyDetectionZone";
-    private final static String KEY_BW_PHOTO_COPY_QA = "KycPreferenceKeyBwPhotoCopyQA";
+    private final static String KEY_EDGE_MODE = "KycPreferenceKeyEdgeMode";
+    private final static String KEY_BLUR_QC = "KycPreferenceKeyEnabledBlurQC";
+    private final static String KEY_GLARE_QC = "KycPreferenceKeyEnabledGlareQC";
+    private final static String KEY_DARK_QC = "KycPreferenceKeyEnabledDarkQC";
+    private final static String KEY_BW_QC = "KycPreferenceKeyEnabledBwQC";
 
     // FaceId
     private final static String KEY_FACE_LIVENESS_MODE = "KycPreferenceKeyLivenessMode";
-    private final static String KEY_FACE_LIVENESS_THRESHOLD = "KycPreferenceKeyLivenessThreshold";
-    private final static String KEY_FACE_QUALITY_THRESHOLD = "KycPreferenceKeyQualityThreshold";
-    private final static String KEY_FACE_BLINK_TIMEOUT = "KycPreferenceKeyBlinkTimeout";
 
     //endregion
 
@@ -128,59 +117,11 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
     public void initialise(final Context context) {
         mContext = context;
         mPreferences = context.getSharedPreferences(SHARED_PREF_KEY, Context.MODE_PRIVATE);
-        // Start getting face id license etc...
-        initFaceId();
     }
 
     //endregion
 
     //region Private Helpers
-
-    private List<AbstractOption> createFaceIdSettings() {
-        final HashMap<String, String> livenessMode = new LinkedHashMap<>();
-        livenessMode.put(FaceCaptureLivenessMode.PASSIVE.toString(),
-                mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_PASSIVE));
-        livenessMode.put(FaceCaptureLivenessMode.ACTIVE.toString(),
-                mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_ACTIVE));
-
-        return new ArrayList<>(Arrays.asList(
-
-                new AbstractOption.SectionHeader(AbstractOption.OptionSection.FaceCapture,
-                        mContext.getString(R.string.STRING_KYC_OPTION_SECTION_FACEID)),
-
-                new AbstractOption.Segment(AbstractOption.OptionSection.FaceCapture,
-                        mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_CAP),
-                        mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_DES),
-                        livenessMode,
-                        this::getFaceLivenessMode,
-                        this::setFaceLivenessMode),
-
-                new AbstractOption.Number(AbstractOption.OptionSection.FaceCapture,
-                        mContext.getString(R.string.STRING_KYC_OPTION_FACE_QUALITY_THRESHOLD_CAP),
-                        mContext.getString(R.string.STRING_KYC_OPTION_FACE_QUALITY_THRESHOLD_DES),
-                        0,
-                        100,
-                        this::getFaceQualityThreshold,
-                        this::setFaceQualityThreshold),
-
-                new AbstractOption.Number(AbstractOption.OptionSection.FaceCapture,
-                        mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_THRESHOLD_CAP),
-                        mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_THRESHOLD_DES),
-                        0,
-                        100,
-                        this::getFaceLivenessThreshold,
-                        this::setFaceLivenessThreshold),
-
-                new AbstractOption.Number(AbstractOption.OptionSection.FaceCapture,
-                        mContext.getString(R.string.STRING_KYC_OPTION_FACE_BLINK_TIMEOUT_CAP),
-                        mContext.getString(R.string.STRING_KYC_OPTION_FACE_BLINK_TIMEOUT_DES),
-                        0,
-                        100,
-                        this::getFaceBlinkTimeout,
-                        this::setFaceBlinkTimeout)
-
-        ));
-    }
 
     private List<AbstractOption> createVersionSettings() {
         return new ArrayList<>(Arrays.asList(
@@ -193,16 +134,16 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
                         BuildConfig.VERSION_NAME),
 
                 new AbstractOption.Version(AbstractOption.OptionSection.Version,
-                        mContext.getString(R.string.STRING_KYC_OPTION_VERSION_ID_SDK),
+                        mContext.getString(R.string.STRING_KYC_OPTION_VERSION_DOC_SDK),
                         CaptureSDK.version),
 
                 new AbstractOption.Version(AbstractOption.OptionSection.Version,
                         mContext.getString(R.string.STRING_KYC_OPTION_VERSION_LIVENESS),
-                        FaceCaptureManager.version),
+                        "2.8.0"),
 
                 new AbstractOption.Version(AbstractOption.OptionSection.Version,
-                        mContext.getString(R.string.STRING_JSON_WEB_TOKEN_EXPIRATION),
-                        getJWTExpiration(getJsonWebToken())),
+                        mContext.getString(R.string.STRING_JSON_KYC2_USER_ACCOUNT),
+                        getUserAccount()),
 
                 new AbstractOption.Button(AbstractOption.OptionSection.Version,
                         mContext.getString(R.string.STRING_KYC_OPTION_WEB_TOKEN),
@@ -228,90 +169,59 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
         ));
     }
 
-    private List<AbstractOption> createRiskManagementSettings() {
+    private List<AbstractOption> createDocumentScanSettings() {
         return new ArrayList<>(Arrays.asList(
-
-                new AbstractOption.SectionHeader(AbstractOption.OptionSection.RiskManagement,
-                        mContext.getString(R.string.STRING_KYC_OPTION_SECTION_RISK)),
-
-                new AbstractOption.Checkbox(AbstractOption.OptionSection.RiskManagement,
-                        mContext.getString(R.string.STRING_KYC_OPTION_IGNORE_DATE_CAP),
-                        mContext.getString(R.string.STRING_KYC_OPTION_IGNORE_DATE_DES),
-                        this::isIgnoreExpirationDate,
-                        this::setIgnoreExpirationDate)
-
-        ));
-    }
-
-    private List<AbstractOption> createIdentityDocumentScanSettings() {
-        return new ArrayList<>(Arrays.asList(
-
-                new AbstractOption.SectionHeader(AbstractOption.OptionSection.IdentityDocumentScan,
+                new AbstractOption.SectionHeader(AbstractOption.OptionSection.DocumentScan,
                         mContext.getString(R.string.STRING_KYC_OPTION_SECTION_SCAN)),
 
-                new AbstractOption.Checkbox(AbstractOption.OptionSection.IdentityDocumentScan,
+                new AbstractOption.Checkbox(AbstractOption.OptionSection.DocumentScan,
                         mContext.getString(R.string.STRING_KYC_OPTION_MANUAL_MODE_CAP),
                         mContext.getString(R.string.STRING_KYC_OPTION_MANUAL_MODE_DES),
                         this::isManualScan,
-                        this::setManualScan),
-
-                new AbstractOption.Checkbox(AbstractOption.OptionSection.IdentityDocumentScan,
-                        mContext.getString(R.string.STRING_KYC_OPTION_AUTO_DETECTION_CAP),
-                        mContext.getString(R.string.STRING_KYC_OPTION_AUTO_DETECTION_DES),
-                        this::isAutomaticTypeDetection,
-                        this::setAutomaticTypeDetection),
-
-                new AbstractOption.Checkbox(AbstractOption.OptionSection.IdentityDocumentScan,
-                        mContext.getString(R.string.STRING_KYC_OPTION_CAMERA_ORIENT_CAP),
-                        mContext.getString(R.string.STRING_KYC_OPTION_CAMERA_ORIENT_DES),
-                        this::isCameraOrientationPortrait,
-                        this::setCameraOrientation),
-
-                new AbstractOption.Checkbox(AbstractOption.OptionSection.IdentityDocumentScan,
-                        mContext.getString(R.string.STRING_KYC_OPTION_DETECTION_ZONE_CAP),
-                        mContext.getString(R.string.STRING_KYC_OPTION_DETECTION_ZONE_DES),
-                        this::isIdCaptureDetectionZoneReduced,
-                        this::setIdCaptureDetectionZone),
-
-                new AbstractOption.Checkbox(AbstractOption.OptionSection.IdentityDocumentScan,
-                        mContext.getString(R.string.STRING_KYC_OPTION_BW_PHOTO_COPY_CAP),
-                        mContext.getString(R.string.STRING_KYC_OPTION_BW_PHOTO_COPY_DES),
-                        this::isBwPhotoCopyQA,
-                        this::setBwPhotoCopyQA)
-
+                        this::setManualScan)
         ));
     }
 
-    private void initFaceId() {
-        mFaceIdInitSuccess = false;
-        mFaceIdInitError = null;
+    private List<AbstractOption> createDocumentScanConfigurationSettings() {
+        final HashMap<String, String> edgeMode = new LinkedHashMap<>();
+        edgeMode.put(mContext.getString(R.string.STRING_KYC_OPTION_EDGE_MODE_ML), mContext.getString(R.string.STRING_KYC_OPTION_EDGE_MODE_ML));
+        edgeMode.put(mContext.getString(R.string.STRING_KYC_OPTION_EDGE_MODE_IP), mContext.getString(R.string.STRING_KYC_OPTION_EDGE_MODE_IP));
 
-        // Important: init the face capture before using it
-        EKycLicenseManager.initialize(mContext, Configuration.PRODUCT_KEY, Configuration.SERVER_URL,
-                new EKycLicenseConfigurationListener() {
-                    @Override
-                    public void onLicenseConfigurationSuccess() {
-                        // Someone is waiting for init process. Notify it.
-                        if (mFaceCompletion != null) {
-                            mFaceCompletion.onLicenseConfigurationSuccess();
-                            mFaceCompletion = null;
-                        }
-                        mFaceIdInitSuccess = true;
-                        mFaceIdInitError = null;
-                    }
+        return new ArrayList<>(Arrays.asList(
+                new AbstractOption.SectionHeader(AbstractOption.OptionSection.DocumentConfig,
+                        mContext.getString(R.string.STRING_KYC_OPTION_SECTION_SCAN_CONFIG)),
 
-                    @Override
-                    public void onLicenseConfigurationFailure(final Exception exception) {
-                        // Someone is waiting for init process. Notify it.
-                        if (mFaceCompletion != null) {
-                            mFaceCompletion.onLicenseConfigurationFailure(exception);
-                            mFaceCompletion = null;
-                        }
+                new AbstractOption.Segment(AbstractOption.OptionSection.DocumentConfig,
+                        mContext.getString(R.string.STRING_KYC_OPTION_EDGE_MODE_CAP),
+                        mContext.getString(R.string.STRING_KYC_OPTION_EDGE_MODE_DES),
+                        edgeMode,
+                        this::getEdgeMode,
+                        this::setEdgeMode),
 
-                        mFaceIdInitSuccess = false;
-                        mFaceIdInitError = exception;
-                    }
-                });
+                new AbstractOption.Checkbox(AbstractOption.OptionSection.DocumentConfig,
+                        mContext.getString(R.string.STRING_KYC_OPTION_ENABLE_BLUR_CHECK_CAP),
+                        mContext.getString(R.string.STRING_KYC_OPTION_ENABLE_BLUR_CHECK_DES),
+                        this::isEnabledBlurQC,
+                        this::setEnabledBlurQC),
+
+                new AbstractOption.Checkbox(AbstractOption.OptionSection.DocumentConfig,
+                        mContext.getString(R.string.STRING_KYC_OPTION_ENABLE_GLARE_CHECK_CAP),
+                        mContext.getString(R.string.STRING_KYC_OPTION_ENABLE_GLARE_CHECK_DES),
+                        this::isEnabledGlareQC,
+                        this::setEnabledGlareQC),
+
+                new AbstractOption.Checkbox(AbstractOption.OptionSection.DocumentConfig,
+                        mContext.getString(R.string.STRING_KYC_OPTION_ENABLE_DARK_CHECK_CAP),
+                        mContext.getString(R.string.STRING_KYC_OPTION_ENABLE_DARK_CHECK_DES),
+                        this::isEnabledDarkQC,
+                        this::setEnabledDarkQC),
+
+                new AbstractOption.Checkbox(AbstractOption.OptionSection.DocumentConfig,
+                        mContext.getString(R.string.STRING_KYC_OPTION_ENABLE_BW_CHECK_CAP),
+                        mContext.getString(R.string.STRING_KYC_OPTION_ENABLE_BW_CHECK_DES),
+                        this::isEnabledBwQC,
+                        this::setEnabledBwQC)
+        ));
     }
 
     private boolean setValue(final String key, final int value) {
@@ -368,21 +278,6 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
 
     //region Public API
 
-    public void initializeFaceIdLicense(final EKycLicenseConfigurationListener completion) {
-        if (mFaceIdInitSuccess) {
-            // Successfull init already done.
-            completion.onLicenseConfigurationSuccess();
-        } else {
-            // If it's not yet inited. Wait for initializeWithProductKey.
-            mFaceCompletion = completion;
-
-            // Something went wrong during init. Try it again.
-            if (mFaceIdInitError != null) {
-                initFaceId();
-            }
-        }
-    }
-
     private void openPrivacyPolicy() {
         // Open Terms and Conditions only once.
         final MainActivity activity = (MainActivity) mContext;
@@ -405,9 +300,8 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
     public List<AbstractOption> getOptions() {
         final ArrayList<AbstractOption> menuItems = new ArrayList<>();
         menuItems.addAll(createGeneralSettings());
-        menuItems.addAll(createRiskManagementSettings());
-        menuItems.addAll(createIdentityDocumentScanSettings());
-        menuItems.addAll(createFaceIdSettings());
+         menuItems.addAll(createDocumentScanSettings());
+        menuItems.addAll(createDocumentScanConfigurationSettings());
         menuItems.addAll(createVersionSettings());
 
         return menuItems;
@@ -466,47 +360,93 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
         return getValueBoolean(KEY_FACIAL_RECOGNITION, true);
     }
 
-    public int getMaxImageWidth() {
-        return getValueInt(KEY_MAX_PICTURE_WIDTH, 1024);
+    public String getBaseUrl() {
+        return getValueString(KEY_BASE_URL, "");
     }
 
-    private boolean setMaxImageWidth(final int value) {
-        return setValue(KEY_MAX_PICTURE_WIDTH, value);
+    private void setBaseUrl(String baseUrl) {
+        setValue(KEY_BASE_URL, baseUrl);
     }
 
-    public String getApiKey() {
-        return getValueString(KEY_API_KEY, null);
+    public String getBaseCredentials() {
+        return getValueString(KEY_BASIC_CREDENTIALS, null);
     }
 
-    private void setApiKey(final String apiKey) {
-        setValue(KEY_API_KEY, apiKey);
+    private void setBaseCredentials(String baseUrl) {
+        setValue(KEY_BASIC_CREDENTIALS, baseUrl);
     }
 
-    private boolean setJsonWebToken(final String value) {
-        if (getJWTExpiration(value) != null) {
-            return setValue(KEY_JSON_WEB_TOKEN, value);
+    public String getUserAccount() {
+        // Default = Base64("Unknown:Unknown")
+        String basicAuth = new String(Base64.decode(getValueString(KEY_BASIC_CREDENTIALS, "VW5rbm93OlVua25vd24="), Base64.DEFAULT));
+
+        return basicAuth.substring(0, basicAuth.indexOf(":"));
+    }
+
+    public String getKycQRCodeVersion() {
+        return getValueString(KEY_KYC_QR_CODE_VERSION, null);
+    }
+
+    public void setKycQRCodeVersion(String version) {
+        setValue(KEY_KYC_QR_CODE_VERSION, version);
+    }
+
+    public void clearCredentials() {
+        setValue(KEY_BASE_URL, null);
+        setValue(KEY_BASIC_CREDENTIALS, null);
+    }
+//endregion
+
+    //region QC Management
+    public boolean setEdgeMode(final String value) {
+        return setValue(KEY_EDGE_MODE, value);
+    }
+
+    public String getEdgeMode() {
+        return getValueString(KEY_EDGE_MODE, mContext.getString(R.string.STRING_KYC_OPTION_EDGE_MODE_ML));
+    }
+
+    public int getConfigEdgeMode() {
+        String mode = getValueString(KEY_EDGE_MODE, mContext.getString(R.string.STRING_KYC_OPTION_EDGE_MODE_ML));
+
+        if (mode.equals(mContext.getString(R.string.STRING_KYC_OPTION_EDGE_MODE_ML))) {
+            return Configuration.MachineLearning;
         } else {
-            // Do not store invalid token
-            return false;
+            return Configuration.ImageProcessing;
         }
     }
 
-    public String getJsonWebToken() {
-        return getValueString(KEY_JSON_WEB_TOKEN, null);
+    public boolean setEnabledBlurQC(final boolean value) {
+        return setValue(KEY_BLUR_QC, value);
     }
 
-    //endregion
-
-    //region RiskManagement
-
-    public boolean setIgnoreExpirationDate(final boolean value) {
-        return setValue(KEY_EXPIRATION_DATE, value);
+    public boolean isEnabledBlurQC() {
+        return getValueBoolean(KEY_BLUR_QC, true);
     }
 
-    public boolean isIgnoreExpirationDate() {
-        return getValueBoolean(KEY_EXPIRATION_DATE, false);
+    public boolean setEnabledGlareQC(final boolean value) {
+        return setValue(KEY_GLARE_QC, value);
     }
 
+    public boolean isEnabledGlareQC() {
+        return getValueBoolean(KEY_GLARE_QC, true);
+    }
+
+    public boolean setEnabledDarkQC(final boolean value) {
+        return setValue(KEY_DARK_QC, value);
+    }
+
+    public boolean isEnabledDarkQC() {
+        return getValueBoolean(KEY_DARK_QC, true);
+    }
+
+    public boolean setEnabledBwQC(final boolean value) {
+        return setValue(KEY_BW_QC, value);
+    }
+
+    public boolean isEnabledBwQC() {
+        return getValueBoolean(KEY_BW_QC, true);
+    }
     //endregion
 
 
@@ -520,38 +460,6 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
         return getValueBoolean(KEY_MANUAL_SCAN, false);
     }
 
-    public boolean setAutomaticTypeDetection(final boolean value) {
-        return setValue(KEY_AUTOMATIC_TYPE, value);
-    }
-
-    public boolean isAutomaticTypeDetection() {
-        return getValueBoolean(KEY_AUTOMATIC_TYPE, true);
-    }
-
-    public boolean setCameraOrientation(final boolean value) {
-        return setValue(KEY_CAMERA_OTIENTATION, value);
-    }
-
-    public boolean isCameraOrientationPortrait() {
-        return getValueBoolean(KEY_CAMERA_OTIENTATION, true);
-    }
-
-    public boolean setIdCaptureDetectionZone(final boolean value) {
-        return setValue(KEY_DETECTION_ZONE, value);
-    }
-
-    public boolean isIdCaptureDetectionZoneReduced() {
-        return getValueBoolean(KEY_DETECTION_ZONE, false);
-    }
-
-    public boolean setBwPhotoCopyQA(final boolean value) {
-        return setValue(KEY_BW_PHOTO_COPY_QA, value);
-    }
-
-    public boolean isBwPhotoCopyQA() {
-        return getValueBoolean(KEY_BW_PHOTO_COPY_QA, false);
-    }
-
     //endregion
 
     // region Props - FaceId
@@ -561,31 +469,9 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
     }
 
     public String getFaceLivenessMode() {
-        return getValueString(KEY_FACE_LIVENESS_MODE, FaceCaptureLivenessMode.PASSIVE.toString());
-    }
-
-    public boolean setFaceLivenessThreshold(final int value) {
-        return setValue(KEY_FACE_LIVENESS_THRESHOLD, value);
-    }
-
-    public int getFaceLivenessThreshold() {
-        return getValueInt(KEY_FACE_LIVENESS_THRESHOLD, 0);
-    }
-
-    public boolean setFaceQualityThreshold(final int value) {
-        return setValue(KEY_FACE_QUALITY_THRESHOLD, value);
-    }
-
-    public int getFaceQualityThreshold() {
-        return getValueInt(KEY_FACE_QUALITY_THRESHOLD, 50);
-    }
-
-    public boolean setFaceBlinkTimeout(final int value) {
-        return setValue(KEY_FACE_BLINK_TIMEOUT, value);
-    }
-
-    public int getFaceBlinkTimeout() {
-        return getValueInt(KEY_FACE_BLINK_TIMEOUT, 15);
+        return isFacialRecognition() ?
+                getValueString(KEY_FACE_LIVENESS_MODE, LIVENESS_ENHANCED)
+                : LIVENESS_NO;
     }
 
     //endregion
@@ -607,29 +493,72 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
         if (error != null) {
             hideQRWithMessage(error);
         } else {
-            // QR Code format is "kyc:<apikey>:<jwt>"
-            final String[] elements = qrCodeData.split(":");
-            if (elements.length == 3 && "kyc".equals(elements[0])) {
-                if (elements[1].isEmpty() || elements[2].isEmpty()) {
-                    Log.i("QR Scann", mContext.getString(R.string.STRING_QR_CODE_ERROR_INVALID_DATA));
-                    sender.continueScanning();
-                } else if (!setJsonWebToken(elements[2])) {
-                    Log.i("QR Scann", mContext.getString(R.string.STRING_QR_CODE_ERROR_INVALID_JWT));
-                    sender.continueScanning();
-                } else {
-                    // JWT is already set by previous IF case, now we have to store rest.
-                    setApiKey(elements[1]);
-                    // Display status information.
-                    hideQRWithMessage(mContext.getString(R.string.STRING_QR_CODE_INFO_DONE));
+            String separator = qrCodeData.contains("^") ? "\\^" : ":";
+            String[] elements = qrCodeData.split(separator);
+
+            if (BuildConfig.DEBUG) {
+                Log.w("KYC", "Nb elements: " + elements.length);
+
+                for (int i = 0; i < elements.length; i++) {
+                    Log.i("KYC", "#" + i + ": " + elements[i]);
                 }
+            }
+
+            if(elements.length >= 3) {
+                if (elements[0].isEmpty() || elements[1].isEmpty() || elements[2].isEmpty()) {
+                    Log.i("QR Scan", mContext.getString(R.string.STRING_QR_CODE_ERROR_INVALID_DATA));
+                    sender.continueScanning();
+                }
+
+                clearCredentials();
+
+                // Set QR Code version
+                setKycQRCodeVersion(elements[0]);
+
+                // QR Code format is "kyc2^<basic credentials(base64encoded)>^<url>"
+                if(getKycQRCodeVersion().equals(KYC_QR_CODE_VERSION_KYC2)) {
+                    setBaseCredentials(elements[1]);
+                    setBaseUrl(elements[2]);
+                } else {
+                    Log.i("QR Scan", mContext.getString(R.string.STRING_QR_CODE_ERROR_FAILED));
+                    sender.continueScanning();
+                }
+
+                // Display status information.
+                hideQRWithMessage(mContext.getString(R.string.STRING_QR_CODE_INFO_DONE));
             } else {
-                Log.i("QR Scann", mContext.getString(R.string.STRING_QR_CODE_ERROR_FAILED));
+                Log.i("QR Scan", mContext.getString(R.string.STRING_QR_CODE_ERROR_INVALID_DATA));
                 sender.continueScanning();
             }
         }
-
     }
 
     //endregion
 
+    public String getErrorMessage(String errorCode, String defaultMessage) {
+        String[] errorCodes = mContext.getResources().getStringArray(R.array.error_codes);
+        String[] errorMessages = mContext.getResources().getStringArray(R.array.error_messages);
+
+        for (int i = 0; i < errorCodes.length; i++) {
+            if (errorCodes[i].equals(errorCode)) {
+                return errorMessages[i];
+            }
+        }
+
+        return defaultMessage;
+    }
+
+    public String getErrorMessage(String errorCode) {
+        String[] errorCodes = mContext.getResources().getStringArray(R.array.error_codes);
+        String[] errorMessages = mContext.getResources().getStringArray(R.array.error_messages);
+
+        for (int i = 0; i < errorCodes.length; i++) {
+            if (errorCodes[i].equals(errorCode)) {
+                String result = errorMessages[i];
+                return result;
+            }
+        }
+
+        return "Unknown error!";
+    }
 }

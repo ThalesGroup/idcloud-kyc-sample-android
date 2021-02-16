@@ -10,12 +10,12 @@
     <dimen name="dimensionButtonMargin">8dp</dimen>
 
     <!--All text sizes-->
-    <dimen name="dimensionTextSizeHeader">32dp</dimen>
+    <dimen name="dimensionTextSizeHeader">26dp</dimen>
     <dimen name="dimensionTextSizeHeaderSecondary">22dp</dimen>
     <dimen name="dimensionTextSizeNormal">16dp</dimen>
 
     <!--Generic Offsets-->
-    <dimen name="dimensionMarginBig">32dp</dimen>
+    <dimen name="dimensionMarginBig">20dp</dimen>
     <dimen name="dimensionMarginNormal">16dp</dimen>
     <dimen name="dimensionMarginSmall">8dp</dimen>
     <dimen name="dimensionMarginMinimal">4dp</dimen>

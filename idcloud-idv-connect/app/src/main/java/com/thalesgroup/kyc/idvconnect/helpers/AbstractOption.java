@@ -44,6 +44,7 @@ public abstract class AbstractOption {
     enum OptionSection {
         General,
         FaceCapture,
+        DocCapture,
         Version
     }
 

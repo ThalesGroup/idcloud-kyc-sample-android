@@ -30,7 +30,10 @@ package com.thalesgroup.kyc.idvconnect.gui;
 import android.Manifest;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,6 +44,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.acuant.acuantcamera.camera.AcuantCameraActivity;
+import com.acuant.acuantcamera.camera.AcuantCameraOptions;
 import com.acuant.acuantcamera.constant.Constants;
 import com.acuant.acuantcommon.exception.AcuantException;
 import com.acuant.acuantcommon.initializer.AcuantInitializer;
@@ -50,24 +54,31 @@ import com.acuant.acuantcommon.model.Credential;
 import com.acuant.acuantcommon.model.Error;
 import com.acuant.acuantcommon.model.ErrorCodes;
 import com.acuant.acuantcommon.model.Image;
+import com.acuant.acuantfacecapture.FaceCaptureActivity;
 import com.acuant.acuanthgliveness.model.FaceCapturedImage;
 import com.acuant.acuantimagepreparation.AcuantImagePreparation;
 import com.acuant.acuantimagepreparation.initializer.ImageProcessorInitializer;
 import com.google.android.material.navigation.NavigationView;
+import com.thalesgroup.kyc.idvconnect.BuildConfig;
 import com.thalesgroup.kyc.idvconnect.R;
+import com.thalesgroup.kyc.idvconnect.gui.activity.AwareLivenessActivity;
 import com.thalesgroup.kyc.idvconnect.gui.activity.FacialLivenessActivity;
 import com.thalesgroup.kyc.idvconnect.gui.fragment.FragmentFaceIdTutorial;
 import com.thalesgroup.kyc.idvconnect.gui.fragment.FragmentHome;
 import com.thalesgroup.kyc.idvconnect.gui.fragment.FragmentKycOverview;
 import com.thalesgroup.kyc.idvconnect.gui.fragment.FragmentMissingPermissions;
 import com.thalesgroup.kyc.idvconnect.helpers.AbstractOption;
-import com.thalesgroup.kyc.idvconnect.helpers.Configuration;
+import com.thalesgroup.kyc.idvconnect.helpers.KYCConfiguration;
 import com.thalesgroup.kyc.idvconnect.helpers.DataContainer;
 import com.thalesgroup.kyc.idvconnect.helpers.KYCManager;
 import com.thalesgroup.kyc.idvconnect.helpers.OptionAdapter;
 import com.thalesgroup.kyc.idvconnect.helpers.PermissionManager;
 import com.thalesgroup.kyc.idvconnect.helpers.util.ImageUtil;
+import com.thalesgroup.kyc.idvconnect.helpers.util.JsonUtil;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,9 +96,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     //region Definition
 
-    private final static String ACUANT_FRM_ENDPOINT = "https://frm.acuant.eu";
-    private final static String ACUANT_ASSURE_ID_ENDPOINT = "https://services.assureid.eu";
-    private final static String ACUANT_MEDISCAN_ENDPOINT = "https://medicscan.acuant.eu";
+    private final static String ACUANT_FRM_ENDPOINT = "https://eu.frm.acuant.net";
+    private final static String ACUANT_ASSURE_ID_ENDPOINT = "https://eu.services.assureid.net";
+    private final static String ACUANT_MEDISCAN_ENDPOINT = "https://eu.medicscan.acuant.net";
+    private final static String ACUANT_ACAS_ENDPOINT = "https://eu.acas.acuant.net";
+    private final static String ACUANT_OZONE_ENDPOINT = "https://eu.ozone.acuant.net";
+    private final static String ACUANT_PASSIVE_LIVENESS_ENDPOINT = "https://eu.passlive.acuant.net";
 
     private static int SHARPNESS_THRESHOLD = 50;
     private static int GLARE_THRESHOLD = 50;
@@ -98,6 +112,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private static final int REQUEST_ID_DOC_SCAN = 1;
     private static final int REQUEST_ID_FACE_SCAN = 2;
+    private static final int REQUEST_ID_FACE_PASSIVE_SCAN = 3;
+    private static final int REQUEST_ID_FACE_ENHANCED_PASSIVE_SCAN = 4;
 
     private DrawerLayout mDrawer;
     private OptionAdapter mOptionAdapter;
@@ -112,7 +128,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     //endregion
 
     //region Life Cycle
-
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -148,8 +163,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (requestCode == REQUEST_ID_DOC_SCAN) {
             onActivityResultDocument(resultCode, data);
-        } else {
+        } else if (requestCode == REQUEST_ID_FACE_SCAN) {
             onActivityResultFace(resultCode);
+        } else if (requestCode == REQUEST_ID_FACE_PASSIVE_SCAN) {
+            onActivityResultFacePassive(resultCode, data);
+        } else if (requestCode == REQUEST_ID_FACE_ENHANCED_PASSIVE_SCAN) {
+            onActivityResultFaceEnhancedPassive(resultCode, data);
         }
     }
 
@@ -188,16 +207,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             mMissingPermissions = null;
         }
 
-        Credential.init(Configuration.ACUANT_USERNAME,
-                Configuration.ACUANT_PASSWORD,
-                Configuration.ACUANT_SUBSCRIPTION_ID,
+        Credential.init(KYCConfiguration.ACUANT_USERNAME,
+                KYCConfiguration.ACUANT_PASSWORD,
+                KYCConfiguration.ACUANT_SUBSCRIPTION_ID,
                 ACUANT_FRM_ENDPOINT,
                 ACUANT_ASSURE_ID_ENDPOINT,
-                ACUANT_MEDISCAN_ENDPOINT);
+                ACUANT_MEDISCAN_ENDPOINT,
+                ACUANT_PASSIVE_LIVENESS_ENDPOINT,
+                ACUANT_ACAS_ENDPOINT,
+                ACUANT_OZONE_ENDPOINT);
         final List<IAcuantPackage> list = new ArrayList<>();
         list.add(new ImageProcessorInitializer());
         try {
-            AcuantInitializer.intialize(null, getApplicationContext(), list, new IAcuantPackageCallback() {
+            AcuantInitializer.initialize(null, getApplicationContext(), list, new IAcuantPackageCallback() {
                 @Override
                 public void onInitializeSuccess() {
                     displayFragment(new FragmentHome(), false, false);
@@ -217,7 +239,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void tryAgainWithMessage(final String message) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Try Again");
+        builder.setCancelable(false);
         builder.setMessage(message);
+        builder.setIcon(R.drawable.error);
         builder.setPositiveButton("Try Again", (dialog, which) -> {
             openDocScanActivity(AbstractOption.DocumentType.IdCard);
         });
@@ -236,13 +260,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             final String fileUrl = data.getStringExtra(Constants.ACUANT_EXTRA_IMAGE_URL);
             final byte[] imageBytes = ImageUtil.readFile(fileUrl);
             final Image croppedImage = ImageUtil.cropImage(imageBytes);
-            if (croppedImage.image == null || (croppedImage.error != null && croppedImage.error.errorCode == ErrorCodes.ERROR_LowResolutionImage)) {
+
+            if ((BuildConfig.DEBUG) && (croppedImage.image != null)) {
+                Log.w("KYC", "Sharpness: " + AcuantImagePreparation.INSTANCE.sharpness(croppedImage.image));
+                Log.w("KYC", "Glare: " + AcuantImagePreparation.INSTANCE.sharpness(croppedImage.image));
+            }
+
+            if (croppedImage.image == null) {
+                tryAgainWithMessage(getString(R.string.STRING_KYC_DOC_NO_CROP));
+            }
+            else if (  (KYCManager.getInstance().isAdditionalImageChecks())
+                     &&(croppedImage.error != null && croppedImage.error.errorCode != ErrorCodes.ERROR_LowResolutionImage))
+            {
+                if (BuildConfig.DEBUG) {
+                    Log.e("KYC", "Crop error: " + croppedImage.error.errorDescription);
+                }
                 tryAgainWithMessage(croppedImage.error.errorDescription);
-            } else {
-                final Integer sharpness = AcuantImagePreparation.sharpness(croppedImage.image);
-                final Integer glare = AcuantImagePreparation.glare(croppedImage.image);
-                if (sharpness <  SHARPNESS_THRESHOLD || glare < GLARE_THRESHOLD ||
-                        croppedImage.dpi < MANDATORY_RESOLUTION_THRESHOLD_SMALL) {
+            }
+            else {
+                final Integer sharpness = AcuantImagePreparation.INSTANCE.sharpness(croppedImage.image);
+                final Integer glare = AcuantImagePreparation.INSTANCE.glare(croppedImage.image);
+
+                if (  (KYCManager.getInstance().isAdditionalImageChecks())
+                    &&(  (sharpness <  SHARPNESS_THRESHOLD)
+                       ||(glare < GLARE_THRESHOLD)
+                       ||(croppedImage.dpi < MANDATORY_RESOLUTION_THRESHOLD_SMALL)
+                      )
+                   ) {
                     final String message = "Image did not meet basic criteria.\nSharpness: "
                             + sharpness + "(" + SHARPNESS_THRESHOLD + ")\nGlare: "
                             + glare + "(" + GLARE_THRESHOLD + ")\nDPI: "
@@ -277,6 +321,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else {
             Toast.makeText(this, "Document capture failed.", Toast.LENGTH_LONG).show();
         }
+
+        // Cleanup Cache directory
+        ImageUtil.deleteCache(this);
     }
 
     /**
@@ -285,7 +332,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void scanBackSide() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Scan Back Side");
+        builder.setCancelable(false);
         builder.setMessage("Turn document and scan back side.");
+        builder.setIcon(R.drawable.info_icon);
         builder.setPositiveButton("OK", (dialog, which) -> {
             mFrontDocument = false;
             openDocScanActivity(AbstractOption.DocumentType.IdCard);
@@ -311,15 +360,85 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else {
             final Bitmap image = FaceCapturedImage.Companion.getBitmapImage();
             if (image != null) {
-                final Bitmap resizedImage = ImageUtil.resize(image, 480);
-                DataContainer.instance().mSelfie = ImageUtil.bitmapToBytes(resizedImage);
+                //final Bitmap resizedImage = ImageUtil.resize(image, 480);
+                DataContainer.instance().mSelfie = ImageUtil.bitmapToBytes(image);
                 displayFragment(new FragmentKycOverview(), true, true);
+
+                // Cleanup Cache directory
+                ImageUtil.deleteCache(this);
             } else {
                 Toast.makeText(this, "Error: " + "Cannot retrieve image.", Toast.LENGTH_LONG).show();
             }
         }
     }
 
+    /**
+     * Handles the {@link this#onActivityResult} method in case of scanning of face in passive mode.
+     *
+     * @param resultCode Result code from face scanning.
+     */
+    private void onActivityResultFacePassive(final int resultCode, final Intent data) {
+        // Success capture for passive liveness
+        if (resultCode == FaceCaptureActivity.RESPONSE_SUCCESS_CODE) {
+
+            // Get image
+            byte[] imageBytes = readFromFile(data.getStringExtra(FaceCaptureActivity.OUTPUT_URL));
+            Bitmap capturedSelfieImage = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+
+            // Display capture result
+            if (capturedSelfieImage != null) {
+                final Bitmap resizedImage = ImageUtil.resize(capturedSelfieImage, 480);
+                DataContainer.instance().mSelfie = ImageUtil.bitmapToBytes(resizedImage);
+                displayFragment(new FragmentKycOverview(), true, true);
+
+                // Cleanup Cache directory
+                ImageUtil.deleteCache(this);
+            } else {
+                Toast.makeText(this, "Error: " + "Cannot retrieve image.", Toast.LENGTH_LONG).show();
+            }
+        }
+        // Cancelled by user
+        else if (resultCode == FaceCaptureActivity.RESPONSE_CANCEL_CODE) {
+            // Do nothing!
+        }
+        // Error
+        else {
+            // For demo purposes. On error, start again.
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Face capture failed");
+            builder.setMessage("Error");
+            builder.setPositiveButton("Try Again", (dialogInterface, i) -> openFaceScanActivity());
+            builder.setNegativeButton("Cancel", null);
+            builder.show();
+        }
+    }
+
+    /**
+     * Handles the {@link this#onActivityResult} method in case of scanning of face in enhanced passive mode.
+     *
+     * @param resultCode Result code from face scanning.
+     */
+    private void onActivityResultFaceEnhancedPassive(final int resultCode, final Intent data) {
+        if (resultCode == ErrorCodes.ERROR_CAPTURING_FACIAL || resultCode == ErrorCodes.USER_CANCELED_FACIAL) {
+            // For demo purposes. On error, start again.
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Face capture failed");
+            builder.setMessage("Error");
+            builder.setPositiveButton("Try Again", (dialogInterface, i) -> openFaceScanActivity());
+            builder.setNegativeButton("Cancel", null);
+            builder.show();
+        } else {
+            if (DataContainer.instance().mEnhancedSelfieJson != null) {
+                JsonUtil.logJson(DataContainer.instance().mEnhancedSelfieJson, "Server Aware Data");
+                displayFragment(new FragmentKycOverview(), true, true);
+
+                // Cleanup Cache directory
+                ImageUtil.deleteCache(this);
+            } else {
+                Toast.makeText(this, "Error: " + "Cannot retrieve image.", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
     //endregion
 
     //region OnNavigationItemSelectedListener
@@ -338,7 +457,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      *
      * @param fragment   Fragment to display.
      * @param addToStack {@code True} if {@code Fragment} should be added to backstack.
-     * @param animated   {@code True} if {@code Fragment} should be added to backstack.
+     * @param animated   {@code True} if {@code Fragment} should be animated.
      */
     public void displayFragment(final Fragment fragment,
                                 final boolean addToStack,
@@ -393,8 +512,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      */
     public void openDocScanActivity(final AbstractOption.DocumentType docType) {
         final Intent cameraIntent = new Intent(MainActivity.this, AcuantCameraActivity.class);
-        cameraIntent.putExtra(Constants.ACUANT_EXTRA_IS_AUTO_CAPTURE, true);
-        cameraIntent.putExtra(Constants.ACUANT_EXTRA_BORDER_ENABLED, true);
+        cameraIntent.putExtra(Constants.ACUANT_EXTRA_CAMERA_OPTIONS,
+                new AcuantCameraOptions.DocumentCameraOptionsBuilder()
+                        .setAutoCapture(!KYCManager.getInstance().isManualScan())
+                        .setColorBracketAlign(Color.WHITE)
+                        .build());
+
         startActivityForResult(cameraIntent, REQUEST_ID_DOC_SCAN);
     }
 
@@ -402,8 +525,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * Opens the face scanning activity.
      */
     public void openFaceScanActivity() {
-        final Intent cameraIntent = new Intent(MainActivity.this, FacialLivenessActivity.class);
-        startActivityForResult(cameraIntent, REQUEST_ID_FACE_SCAN);
+        // Active liveness mode
+        if (KYCManager.getInstance().isActiveFaceLivenessMode()) {
+            final Intent cameraIntent = new Intent(MainActivity.this, FacialLivenessActivity.class);
+            startActivityForResult(cameraIntent, REQUEST_ID_FACE_SCAN);
+        }
+        // Passive liveness mode
+        else if (KYCManager.getInstance().isPassiveFaceLivenessMode()) {
+            final Intent cameraIntent = new Intent(MainActivity.this, FaceCaptureActivity.class);
+            startActivityForResult(cameraIntent, REQUEST_ID_FACE_PASSIVE_SCAN);
+        }
+        // Enhanced Passive liveness mode
+        else if (KYCManager.getInstance().isEnhancedPassiveFaceLivenessMode()) {
+            final Intent cameraIntent = new Intent(MainActivity.this, AwareLivenessActivity.class);
+            startActivityForResult(cameraIntent, REQUEST_ID_FACE_ENHANCED_PASSIVE_SCAN);
+        }
     }
 
     /**
@@ -438,7 +574,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             menuButton.setVisibility(View.VISIBLE);
         } else {
             menuButton.setOnClickListener(null);
-            menuButton.setVisibility(View.INVISIBLE);
+            menuButton.setVisibility(View.GONE);
         }
     }
 
@@ -454,4 +590,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     //endregion
+
+    private byte[] readFromFile(String fileUri) {
+        File file = new File(fileUri);
+        long fileLen = file.length();
+        byte[] bytes = new byte[(int) fileLen];
+
+        try {
+            BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
+            buf.read(bytes, 0, (int) fileLen);
+        } catch (Exception e) {
+            // TODO
+        }
+        return bytes;
+    }
 }

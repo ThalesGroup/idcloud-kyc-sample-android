@@ -25,4 +25,14 @@
     <dimen name="nav_header_vertical_spacing">8dp</dimen>
     <dimen name="nav_header_height">250dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="check_image_size">30dp</dimen>
+    <dimen name="smart_level_font_size">16sp</dimen>
+
+    <!--From Old IDV DOC 3.4.2 -->
+    <dimen name="common_image_size">60dp</dimen>
+    <dimen name="error_font_size">24sp</dimen>
+    <dimen name="information_font_size">24sp</dimen>
+    <dimen name="shutter_image_size">50dp</dimen>
+    <dimen name="success_font_size">24sp</dimen>
+
 </resources>

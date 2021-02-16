@@ -37,7 +37,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.thalesgroup.kyc.idvconnect.R;
-import com.thalesgroup.kyc.idvconnect.helpers.Configuration;
+import com.thalesgroup.kyc.idvconnect.helpers.KYCConfiguration;
 import com.thalesgroup.kyc.idvconnect.helpers.KYCManager;
 
 public class FragmentPrivacyPolicy extends AbstractFragmentBase {
@@ -77,7 +77,7 @@ public class FragmentPrivacyPolicy extends AbstractFragmentBase {
      * On click listener for the privacy policy button.
      */
     private void onButtonPressedPrivacyPolicy() {
-        final Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(Configuration.PRIVACY_POLICY_URL));
+        final Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(KYCConfiguration.PRIVACY_POLICY_URL));
         startActivity(browserIntent);
     }
 

@@ -35,6 +35,7 @@ import android.view.ViewGroup;
 import com.thalesgroup.kyc.idv.R;
 import com.thalesgroup.kyc.idv.gui.MainActivity;
 import com.thalesgroup.kyc.idv.helpers.AbstractOption;
+import com.thalesgroup.kyc.idv.helpers.DataContainer;
 import com.thalesgroup.kyc.idv.helpers.KYCManager;
 
 public class FragmentSecondStep extends AbstractFragmentBase {
@@ -55,6 +56,8 @@ public class FragmentSecondStep extends AbstractFragmentBase {
 
         retValue.findViewById(R.id.fragment_second_step_button_id_card).setOnClickListener(view -> onButtonPressedIdCard());
         retValue.findViewById(R.id.fragment_second_step_button_passport).setOnClickListener(view -> onButtonPressedPassport());
+
+        DataContainer.instance().clearDocData();
 
         return retValue;
     }

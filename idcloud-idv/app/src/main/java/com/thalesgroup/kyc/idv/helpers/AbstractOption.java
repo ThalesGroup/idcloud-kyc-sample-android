@@ -37,16 +37,35 @@ public abstract class AbstractOption {
     //region Definition
 
     public enum DocumentType {
-        IdCard,
-        Passport,
-        PassportBiometric
-    }
+        IdCard(0),
+        Passport(1),
+        PassportBiometric(3);
+
+        private int mValue;
+
+        DocumentType(final int value) {
+            mValue = value;
+        }
+
+        public int getValue() {
+            return mValue;
+        }
+
+        public static DocumentType fromId(final int value) {
+            for (final DocumentType documentType : values()) {
+                if (documentType.mValue == value) {
+                    return documentType;
+                }
+            }
+            return IdCard;
+        }
+
+        }
 
     enum OptionSection {
         General,
-        RiskManagement,
-        IdentityDocumentScan,
-        FaceCapture,
+        DocumentScan,
+        DocumentConfig,
         Version
     }
 
@@ -194,11 +213,11 @@ public abstract class AbstractOption {
 
         //region Properties
 
-        boolean setValue(final boolean value, final Context context) {
+        boolean setValue(final boolean value) {
             return mSetter.action(value);
         }
 
-        boolean getValue(final Context context) {
+        boolean getValue() {
             return mGetter.action();
         }
 

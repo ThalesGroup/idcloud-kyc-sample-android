@@ -17,9 +17,9 @@
             android:id="@+id/fragment_kyc_overview_caotuib"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="@dimen/dimensionMarginNormal"
-            android:layout_gravity="center"
-            android:gravity="start"
+            android:layout_margin="@dimen/dimensionMarginSmall"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center_horizontal"
             android:textSize="@dimen/dimensionTextSizeHeader"
             android:textColor="@color/colorTextPrimary"
             android:text="@string/fragment_kyc_overview_caption" />
@@ -39,7 +39,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
                 android:orientation="horizontal"
-                android:layout_margin="@dimen/dimensionMarginSmall" >
+                android:layout_margin="@dimen/dimensionMarginMinimal" >
                 <ImageView
                     android:id="@+id/fragment_kyc_overview_iv_selfie"
                     android:layout_weight="1"
@@ -55,7 +55,7 @@
                     android:layout_height="match_parent"
                     android:layout_gravity="center"
                     android:adjustViewBounds="true"
-                    android:layout_marginStart="@dimen/dimensionMarginSmall"
+                    android:layout_marginStart="@dimen/dimensionMarginMinimal"
                     android:contentDescription="@android:string/untitled"
                     android:visibility="gone"
                     tools:srcCompat="@tools:sample/avatars" />
@@ -69,8 +69,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
                 android:gravity="center|top"
-                android:layout_marginStart="@dimen/dimensionMarginSmall"
-                android:layout_marginEnd="@dimen/dimensionMarginSmall"
+                android:layout_marginStart="@dimen/dimensionMarginMinimal"
+                android:layout_marginEnd="@dimen/dimensionMarginMinimal"
                 android:orientation="horizontal" >
 
                 <ImageView
@@ -78,7 +78,7 @@
                     android:layout_weight="1"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginEnd="@dimen/dimensionMarginSmall"
+                    android:layout_marginEnd="@dimen/dimensionMarginMinimal"
                     android:adjustViewBounds="true"
                     tools:srcCompat="@tools:sample/avatars"
                     android:contentDescription="@android:string/untitled" />
@@ -88,7 +88,7 @@
                     android:layout_weight="1"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="@dimen/dimensionMarginSmall"
+                    android:layout_marginStart="@dimen/dimensionMarginMinimal"
                     android:adjustViewBounds="true"
                     tools:srcCompat="@tools:sample/avatars"
                     android:contentDescription="@android:string/untitled" />
@@ -111,22 +111,68 @@
                 android:layout_width="40dp"
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
-                android:layout_marginBottom="@dimen/dimensionMarginSmall"
+                android:layout_marginBottom="@dimen/dimensionMarginMinimal"
                 android:contentDescription="@android:string/untitled"
-                app:srcCompat="@drawable/waiting" />
+                app:srcCompat="@drawable/waiting"
+                android:visibility="invisible"/>
 
             <!--Status Description-->
             <TextView
                 android:id="@+id/fragment_kyc_overview_tv_status"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/dimensionMarginSmall"
+                android:layout_margin="@dimen/dimensionMarginMinimal"
                 android:fontFamily="sans-serif-light"
                 android:gravity="center"
-                android:textSize="16sp"
                 android:textColor="@color/colorTextPrimary"
                 android:text="@string/fragment_kyc_overview_check_document"
                 android:visibility="visible" />
+
+            <!--Status Checks-->
+             <LinearLayout
+                android:id="@+id/fragment_kyc_overview_layout_check_epl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dimensionMarginMinimal"
+                    android:gravity="start"
+                    android:text="@string/fragment_kyc_check_epl"
+                    android:textColor="@color/colorTextPrimary"/>
+                <ImageView
+                    android:id="@+id/fragment_kyc_overview_icon_check_epl"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="@dimen/dimensionMarginMinimal"
+                    android:textColor="@color/colorTextPrimary"
+                    android:gravity="end"
+                    app:srcCompat="@drawable/passed"/>
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/fragment_kyc_overview_layout_check_face"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dimensionMarginMinimal"
+                    android:gravity="start"
+                    android:text="@string/fragment_kyc_check_face"
+                    android:textColor="@color/colorTextPrimary"/>
+                <ImageView
+                    android:id="@+id/fragment_kyc_overview_icon_check_face"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="@dimen/dimensionMarginMinimal"
+                    android:textColor="@color/colorTextPrimary"
+                    android:gravity="end"
+                    app:srcCompat="@drawable/passed"/>
+            </LinearLayout>
 
             <!--Results extracted data like name etc...-->
             <LinearLayout
@@ -134,7 +180,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/background_stroke_radius"
-                android:padding="@dimen/dimensionMarginNormal"
+                android:padding="@dimen/dimensionMarginMinimal"
+                android:layout_marginTop="@dimen/dimensionMarginMinimal"
                 android:orientation="horizontal">
 
                 <TextView
@@ -156,7 +203,6 @@
                     android:gravity="end"
                     android:visibility="visible" />
             </LinearLayout>
-
         </LinearLayout>
 
         <!--Submit / close button-->
@@ -164,7 +210,7 @@
             android:id="@+id/fragment_kyc_overview_button_next"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/dimensionMarginBig"
+            android:layout_marginBottom="@dimen/dimensionMarginNormal"
             android:text="@string/button_enrollment_verify"
             style="@style/AppTheme.Button" />
     </LinearLayout>

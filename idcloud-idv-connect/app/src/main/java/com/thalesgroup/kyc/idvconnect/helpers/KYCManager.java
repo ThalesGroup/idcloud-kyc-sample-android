@@ -30,6 +30,7 @@ package com.thalesgroup.kyc.idvconnect.helpers;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
+import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -46,6 +47,8 @@ import com.thalesgroup.kyc.idvconnect.gui.fragment.FragmentQRCodeReader;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import androidx.annotation.IdRes;
@@ -66,8 +69,17 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
 
     private static final String KEY_FACIAL_RECOGNITION = "KycPreferenceKeyFacalRecognition";
     private static final String KEY_MAX_PICTURE_WIDTH = "KycPreferenceKeyMaxPictureWidth";
-    private final static String KEY_JSON_WEB_TOKEN = "KycPreferenceKeyJsonWebTokenV2";
-    private final static String KEY_API_KEY = "KycPreferenceKeyApiKeyV2";
+    private final static String KEY_BASIC_CREDENTIALS = "KycPreferenceKeyBasicCredentials";
+    private final static String KEY_BASE_URL = "KycPreferenceKeyBaseUrl";
+    private final static String KEY_KYC_QR_CODE_VERSION = "KycPreferenceKeyVersion";
+
+    public final static String KYC_QR_CODE_VERSION_KYC2 = "kyc2";
+
+    private final static String KEY_FACE_LIVENESS_MODE = "KycPreferenceKeyLivenessMode";
+
+    private final static String KEY_MANUAL_SCAN = "KycPreferenceKeyManualScan";
+    private final static String KEY_SCAN_CHECKS = "KycPreferenceKeyScanChecks";
+
 
     //endregion
 
@@ -107,6 +119,14 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
      * @return Side menu options.
      */
     public List<AbstractOption> getOptions() {
+        final HashMap<String, String> livenessMode = new LinkedHashMap<>();
+        livenessMode.put(mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_ENHANCED_PASSIVE),
+                mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_ENHANCED_PASSIVE));
+        livenessMode.put(mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_PASSIVE),
+                mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_PASSIVE));
+        livenessMode.put(mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_ACTIVE),
+                mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_ACTIVE));
+
         return new ArrayList<>(
                 Arrays.asList(
                         // #####################
@@ -121,6 +141,37 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
                                 this::isFacialRecognition, this::setFacialRecognition),
 
                         // #####################
+                        // Face Capture mode
+                        // #####################
+                        new AbstractOption.SectionHeader(AbstractOption.OptionSection.FaceCapture,
+                                mContext.getString(R.string.STRING_KYC_OPTION_SECTION_FACEID)),
+
+                        new AbstractOption.Segment(AbstractOption.OptionSection.FaceCapture,
+                                mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_CAP),
+                                mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_DES),
+                                livenessMode,
+                                this::getFaceLivenessMode,
+                                this::setFaceLivenessMode),
+
+                        // #####################
+                        // Document Capture
+                        // #####################
+                        new AbstractOption.SectionHeader(AbstractOption.OptionSection.DocCapture,
+                                mContext.getString(R.string.STRING_KYC_OPTION_SECTION_DOC_CAPTURE)),
+
+                        new AbstractOption.Checkbox(AbstractOption.OptionSection.DocCapture,
+                                mContext.getString(R.string.STRING_KYC_OPTION_MANUAL_MODE_CAP),
+                                mContext.getString(R.string.STRING_KYC_OPTION_MANUAL_MODE_DES),
+                                this::isManualScan,
+                                this::setManualScan),
+
+                        new AbstractOption.Checkbox(AbstractOption.OptionSection.DocCapture,
+                                mContext.getString(R.string.STRING_KYC_OPTION_EXT_IMAGE_CHECK_CAP),
+                                mContext.getString(R.string.STRING_KYC_OPTION_EXT_IMAGE_CHECK_DES),
+                                this::isAdditionalImageChecks,
+                                this::setAdditionalImageChecks),
+
+                        // #####################
                         // Version
                         // #####################
                         new AbstractOption.SectionHeader(AbstractOption.OptionSection.Version,
@@ -131,12 +182,16 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
                                 BuildConfig.VERSION_NAME),
 
                         new AbstractOption.Version(AbstractOption.OptionSection.Version,
-                                mContext.getString(R.string.STRING_ACUANT_OPTION_VERSION),
-                                "11.2.5"),
+                                mContext.getString(R.string.STRING_DOC_SDK_OPTION_VERSION),
+                                "11.4.9"),
 
                         new AbstractOption.Version(AbstractOption.OptionSection.Version,
-                                mContext.getString(R.string.STRING_JSON_WEB_TOKEN_EXPIRATION),
-                                getJWTExpiration(getJsonWebToken())),
+                                mContext.getString(R.string.STRING_ENHANCED_FACE_OPTION_VERSION),
+                                "2.8.0"),
+
+                        new AbstractOption.Version(AbstractOption.OptionSection.Version,
+                                mContext.getString(R.string.STRING_JSON_KYC2_USER_ACCOUNT),
+                                getUserAccount()),
 
                         new AbstractOption.Button(AbstractOption.OptionSection.Version,
                                 mContext.getString(R.string.STRING_KYC_OPTION_WEB_TOKEN),
@@ -178,14 +233,30 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
         return getValueBoolean(KEY_FACIAL_RECOGNITION, true);
     }
 
+    public boolean setFaceLivenessMode(final String value) {
+        return setValue(KEY_FACE_LIVENESS_MODE, value);
+    }
+
+    public String getFaceLivenessMode() {
+        return getValueString(KEY_FACE_LIVENESS_MODE, mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_ENHANCED_PASSIVE));
+    }
+
+    public boolean isEnhancedPassiveFaceLivenessMode() {
+        return getValueString(KEY_FACE_LIVENESS_MODE, mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_ENHANCED_PASSIVE)).equals(mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_ENHANCED_PASSIVE));
+    }
+
+    public boolean isPassiveFaceLivenessMode() {
+        return getValueString(KEY_FACE_LIVENESS_MODE, mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_ENHANCED_PASSIVE)).equals(mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_PASSIVE));
+    }
+
+    public boolean isActiveFaceLivenessMode() {
+        return getValueString(KEY_FACE_LIVENESS_MODE, mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_ENHANCED_PASSIVE)).equals(mContext.getString(R.string.STRING_KYC_OPTION_FACE_LIVENESS_MODE_ACTIVE));
+    }
+
     /**
      * Retrieves last JSON Web Token or predefined value.
      * @return JWT.
      */
-    public String getJsonWebToken() {
-        return getValueString(KEY_JSON_WEB_TOKEN, null);
-    }
-
     public int getMaxImageWidth() {
         return getValueInt(KEY_MAX_PICTURE_WIDTH, 1024);
     }
@@ -194,22 +265,41 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
         return setValue(KEY_MAX_PICTURE_WIDTH, value);
     }
 
-    public String getApiKey() {
-        return getValueString(KEY_API_KEY, null);
+    public String getBaseUrl() {
+        return getValueString(KEY_BASE_URL, "");
     }
 
-    private void setApiKey(final String apiKey) {
-        setValue(KEY_API_KEY, apiKey);
+    private void setBaseUrl(String baseUrl) {
+        setValue(KEY_BASE_URL, baseUrl);
     }
 
-    /**
-     * Retrieves if automatic detection is set.
-     *
-     * @return {@code True} if automatic detection is set, else {@code false}.
-     */
-    public boolean isAutomaticTypeDetection() {
-        final String keyAutomaticType = "KycPreferenceKeyAutomaticType"; // NOPMD
-        return getValueBoolean(keyAutomaticType, true);
+    public String getBaseCredentials() {
+        return getValueString(KEY_BASIC_CREDENTIALS, null);
+    }
+
+    public String getUserAccount() {
+        // Default = Base64("Unknown:Unknown")
+        String basicAuth = new String(Base64.decode(getValueString(KEY_BASIC_CREDENTIALS, "VW5rbm93OlVua25vd24="), Base64.DEFAULT));
+
+        return basicAuth.substring(0, basicAuth.indexOf(":"));
+    }
+
+    private void setBaseCredentials(String basicAuth) {
+        setValue(KEY_BASIC_CREDENTIALS, basicAuth);
+    }
+
+    public String getKycQRCodeVersion() {
+        return getValueString(KEY_KYC_QR_CODE_VERSION, null);
+    }
+
+    public void setKycQRCodeVersion(String version) {
+        setValue(KEY_KYC_QR_CODE_VERSION, version);
+    }
+
+    public void clearCredentials() {
+        setValue(KEY_KYC_QR_CODE_VERSION, null);
+        setValue(KEY_BASE_URL, null);
+        setValue(KEY_BASIC_CREDENTIALS, null);
     }
 
     /**
@@ -239,16 +329,27 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
 
     //endregion
 
-    //region Private Helpers
+    //region Document Capture
 
-    private boolean setJsonWebToken(final String value) {
-        if (getJWTExpiration(value) != null) {
-            return setValue(KEY_JSON_WEB_TOKEN, value);
-        } else {
-            // Do not store invalid token
-            return false;
-        }
+    public boolean setManualScan(final boolean value) {
+        return setValue(KEY_MANUAL_SCAN, value);
     }
+
+    public boolean isManualScan() {
+        return getValueBoolean(KEY_MANUAL_SCAN, false);
+    }
+
+    public boolean setAdditionalImageChecks(final boolean value) {
+        return setValue(KEY_SCAN_CHECKS, value);
+    }
+
+    public boolean isAdditionalImageChecks() {
+        return getValueBoolean(KEY_SCAN_CHECKS, true);
+    }
+
+    //endregion
+
+    //region Private Helpers
 
     /**
      * Display privacy policy fragment.
@@ -332,14 +433,12 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
             final JWT jwt = new JWT(token);
             return jwt.getExpiresAt() != null ? jwt.getExpiresAt().toString() : null;
         } catch (final Exception exception) {
-            return null;
+            return "No JWT";
         }
     }
-
     //endregion
 
     //region QRCodeReaderDelegate
-
     private void hideQRWithMessage(final String message) {
         final MainActivity activity = (MainActivity) mContext;
         activity.getSupportFragmentManager().popBackStack();
@@ -355,28 +454,72 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
         if (error != null) {
             hideQRWithMessage(error);
         } else {
-            // QR Code format is "kyc:<apikey>:<jwt>"
-            final String[] elements = qrCodeData.split(":");
-            if (elements.length == 3 && "kyc".equals(elements[0])) {
-                if (elements[1].isEmpty() || elements[2].isEmpty()) {
-                    Log.i("QR Scann", mContext.getString(R.string.STRING_QR_CODE_ERROR_INVALID_DATA));
-                    sender.continueScanning();
-                } else if (!setJsonWebToken(elements[2])) {
-                    Log.i("QR Scann", mContext.getString(R.string.STRING_QR_CODE_ERROR_INVALID_JWT));
-                    sender.continueScanning();
-                } else {
-                    // JWT is already set by previous IF case, now we have to store rest.
-                    setApiKey(elements[1]);
-                    // Display status information.
-                    hideQRWithMessage(mContext.getString(R.string.STRING_QR_CODE_INFO_DONE));
+            String separator = qrCodeData.contains("^") ? "\\^" : ":";
+            String[] elements = qrCodeData.split(separator);
+
+            if (BuildConfig.DEBUG) {
+                Log.w("KYC", "Nb elements: " + elements.length);
+
+                for (int i = 0; i < elements.length; i++) {
+                    Log.i("KYC", "#" + i + ": " + elements[i]);
                 }
+            }
+
+            if(elements.length >= 3) {
+                if (elements[0].isEmpty() || elements[1].isEmpty() || elements[2].isEmpty()) {
+                    Log.i("QR Scan", mContext.getString(R.string.STRING_QR_CODE_ERROR_INVALID_DATA));
+                    sender.continueScanning();
+                }
+
+                clearCredentials();
+
+                // Set QR Code version
+                setKycQRCodeVersion(elements[0]);
+
+                // QR Code format is "kyc2^<basic credentials(base64encoded)>^<url>"
+                if(getKycQRCodeVersion().equals(KYC_QR_CODE_VERSION_KYC2)) {
+                    setBaseCredentials(elements[1]);
+                    setBaseUrl(elements[2]);
+                } else {
+                    Log.i("QR Scan", mContext.getString(R.string.STRING_QR_CODE_ERROR_FAILED));
+                    sender.continueScanning();
+                }
+
+                // Display status information.
+                hideQRWithMessage(mContext.getString(R.string.STRING_QR_CODE_INFO_DONE));
             } else {
-                Log.i("QR Scann", mContext.getString(R.string.STRING_QR_CODE_ERROR_FAILED));
+                Log.i("QR Scan", mContext.getString(R.string.STRING_QR_CODE_ERROR_INVALID_DATA));
                 sender.continueScanning();
             }
         }
-
     }
 
     //endregion
+
+    public String getErrorMessage(String errorCode, String defaultMessage) {
+        String[] errorCodes = mContext.getResources().getStringArray(R.array.error_codes);
+        String[] errorMessages = mContext.getResources().getStringArray(R.array.error_messages);
+
+        for (int i = 0; i < errorCodes.length; i++) {
+            if (errorCodes[i].equals(errorCode)) {
+                return errorMessages[i];
+            }
+        }
+
+        return defaultMessage;
+    }
+
+    public String getErrorMessage(String errorCode) {
+        String[] errorCodes = mContext.getResources().getStringArray(R.array.error_codes);
+        String[] errorMessages = mContext.getResources().getStringArray(R.array.error_messages);
+
+        for (int i = 0; i < errorCodes.length; i++) {
+            if (errorCodes[i].equals(errorCode)) {
+                String result = errorMessages[i];
+                return result;
+            }
+        }
+
+        return "Unknown error!";
+    }
 }

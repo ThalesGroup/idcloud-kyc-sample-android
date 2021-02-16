@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--OLD IDV DOC -->
+    <style name="TextError">
+        <item name="android:textColor">@color/error_text_color</item>
+        <item name="android:textSize">@dimen/error_font_size</item>
+        <item name="android:background">@color/error_background_text_color</item>
+    </style>
+    <style name="TextInformation">
+        <item name="android:textColor">@color/information_text_color</item>
+        <item name="android:textSize">@dimen/information_font_size</item>
+        <item name="android:background">@color/information_background_text_color</item>
+    </style>
+    <style name="TextSuccess">
+        <item name="android:textColor">@color/success_text_color</item>
+        <item name="android:textSize">@dimen/success_font_size</item>
+        <item name="android:background">@color/success_background_text_color</item>
+    </style>
+
+</resources>

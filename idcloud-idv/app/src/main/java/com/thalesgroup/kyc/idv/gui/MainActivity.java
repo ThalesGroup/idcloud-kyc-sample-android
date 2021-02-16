@@ -42,8 +42,7 @@ import android.widget.Toast;
 import com.google.android.material.navigation.NavigationView;
 import com.thalesgroup.kyc.idv.R;
 import com.thalesgroup.kyc.idv.gui.activity.ActivityCaptureDocIDVLandscape;
-import com.thalesgroup.kyc.idv.gui.activity.ActivityCaptureDocIDVPortrait;
-import com.thalesgroup.kyc.idv.gui.activity.ActivityCaptureFaceIDV;
+import com.thalesgroup.kyc.idv.gui.activity.AwareLivenessActivity;
 import com.thalesgroup.kyc.idv.gui.fragment.FragmentFaceIdTutorial;
 import com.thalesgroup.kyc.idv.gui.fragment.FragmentHome;
 import com.thalesgroup.kyc.idv.gui.fragment.FragmentKycOverview;
@@ -240,28 +239,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean checkMandatoryPermissions(final boolean askForThem) {
         return PermissionManager.checkPermissions(this,
                                                   askForThem,
-                                                  Manifest.permission.WRITE_EXTERNAL_STORAGE,
                                                   Manifest.permission.CAMERA,
-                                                  Manifest.permission.INTERNET);
+                                                  Manifest.permission.INTERNET
+                                                  );
     }
 
     public void openDocScanActivity(final AbstractOption.DocumentType docType) {
         Intent intent = null;
-        if (KYCManager.getInstance().isCameraOrientationPortrait()) {
-            intent = new Intent(MainActivity.this, ActivityCaptureDocIDVPortrait.class);
-        } else {
-            intent = new Intent(MainActivity.this, ActivityCaptureDocIDVLandscape.class);
-        }
+        intent = new Intent(MainActivity.this, ActivityCaptureDocIDVLandscape.class);
 
         intent.putExtra(MainActivity.BUNDLE_ARGUMENT_DOC_TYPE, docType);
         startActivityForResult(intent, REQUEST_ID_DOC_SCAN);
     }
 
     public void openFaceScanActivity() {
-        final Intent intent = new Intent(MainActivity.this, ActivityCaptureFaceIDV.class);
+        final Intent intent;
+        intent = new Intent(MainActivity.this, AwareLivenessActivity.class);
         startActivityForResult(intent, REQUEST_ID_FACE_SCAN);
     }
-
 
     public void progressBarShow() {
         mProgress.setVisibility(View.VISIBLE);
@@ -289,7 +284,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             menuButton.setVisibility(View.VISIBLE);
         } else {
             menuButton.setOnClickListener(null);
-            menuButton.setVisibility(View.INVISIBLE);
+            menuButton.setVisibility(View.GONE);
         }
     }
 

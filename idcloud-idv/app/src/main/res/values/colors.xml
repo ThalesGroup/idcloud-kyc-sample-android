@@ -25,4 +25,12 @@
     <color name="error">#D32B1E</color>
     <color name="passed">#FF74C776</color>
 
+    <color name="background_camera_view">@android:color/black</color>
+    <color name="error_background_text_color">#80FFFFFF</color>
+    <color name="error_text_color">#000000</color>
+    <color name="information_background_text_color">#80FFFFFF</color>
+    <color name="information_text_color">#000000</color>
+    <color name="success_background_text_color">#80FFFFFF</color>
+    <color name="success_text_color">#000000</color>
+
 </resources>

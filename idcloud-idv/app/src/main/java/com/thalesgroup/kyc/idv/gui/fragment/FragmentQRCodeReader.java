@@ -68,10 +68,6 @@ public class FragmentQRCodeReader extends AbstractFragmentBase implements ZXingS
 
     //region Properties
 
-    public int getCustomTag() {
-        return mCustomTag;
-    }
-
     //endregion
 
     //region Life Cycle

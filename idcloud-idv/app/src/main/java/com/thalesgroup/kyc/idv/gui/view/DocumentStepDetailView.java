@@ -47,7 +47,7 @@ public class DocumentStepDetailView extends LinearLayout {
 
     //region Definition
 
-    private static final int AUTOHIDE_DELAY_MS = 3000;
+    private static final int AUTOHIDE_DELAY_MS = 5000;
 
     private final TextView mCaptionTop;
     private final TextView mCaptionBottom;
@@ -101,7 +101,8 @@ public class DocumentStepDetailView extends LinearLayout {
 
     public void presentInGroupView(final ViewGroup parent,
                                    final ImageView overlay,
-                                   final CompletionHandler handler) {
+                                   final CompletionHandler handler,
+                                   final boolean isBlocking) {
         parent.addView(this);
 
         // TODO: Read actual value. For demo purposes we know, that view is 240dp tall.
@@ -122,8 +123,11 @@ public class DocumentStepDetailView extends LinearLayout {
                         hideView(hiddenPosY, overlay, handler);
                     } else {
                         mAutoHideHandler = new Handler();
-                        mAutoHideHandler.postDelayed(() ->
-                                hideView(hiddenPosY, overlay, handler), AUTOHIDE_DELAY_MS);
+
+                        if (!isBlocking) {
+                            mAutoHideHandler.postDelayed(() ->
+                                    hideView(hiddenPosY, overlay, handler), AUTOHIDE_DELAY_MS);
+                        }
                     }
                 }, false))
                 .start();
@@ -150,7 +154,6 @@ public class DocumentStepDetailView extends LinearLayout {
             }
         });
     }
-
     //endregion
 
     //region Private Helpers
@@ -178,6 +181,5 @@ public class DocumentStepDetailView extends LinearLayout {
         // Enable handler sooner than easing finished.
         new Handler().postDelayed(handler::onFinished, (long) (MainActivity.ANIM_DURATION_SLOW_MS * .5f));
     }
-
     //endregion
 }

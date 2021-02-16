@@ -27,8 +27,16 @@
 
 package com.thalesgroup.kyc.idv.helpers.util;
 
+import android.util.Log;
+
+import com.thalesgroup.kyc.idv.BuildConfig;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Utility class for JSON operations.
@@ -75,6 +83,92 @@ public class JsonUtil {
         } catch (final JSONException e) {
             return defaultValue;
         }
+    }
+
+    /**
+     * Gets JSON {@code boolean} value from {@code JSONObject}.
+     *
+     * @param json
+     *         Input {@code JSONObject} object to parse.
+     * @param key
+     *         Key.
+     * @param defaultValue
+     *         Default value if key is not present in {@code JSONObject} object.
+     * @return Parsed value or default value if not present.
+     */
+    public static boolean jsonGetBoolean(final JSONObject json, final String key, final boolean defaultValue) {
+        try {
+            return json.getBoolean(key);
+        } catch (final JSONException e) {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Gets JSON {@code String[]} value from {@code JSONObject}.
+     *
+     * @param json
+     *         Input {@code JSONObject} object to parse.
+     * @param key
+     *         Key.
+     * @param defaultValue
+     *         Default value if key is not present in {@code JSONObject} object.
+     * @return Parsed value or default value if not present.
+     */
+    public static String[] jsonGetStringArray(final JSONObject json, final String key, final String[] defaultValue) {
+        if (json == null) {
+            return null;
+        }
+
+        try {
+            JSONArray strArray = json.getJSONArray(key);
+            String[] strings = new String[strArray.length()];
+
+            for (int i = 0; i < strArray.length(); i++) {
+                strings[i] = strArray.getString(i);
+            }
+
+            return strings;
+        } catch (final JSONException e) {
+            return defaultValue;
+        }
+    }
+
+    public static void logJson(JSONObject json, String name) {
+        if (BuildConfig.DEBUG) {
+            try {
+                String jsonString = json.toString(4);
+                Log.w("KYC", name + " (" + json.toString().length() + " bytes)");
+
+                String[] strs = jsonString.split("\n");
+
+                for (int i = 0; i < strs.length; i++) {
+                    if (strs[i].length() < 2048) {
+                        Log.w("KYC", strs[i]);
+                    } else {
+                        String[] subStrs = splitToNChar(strs[i], 2048);
+
+                        for (int j = 0; j < subStrs.length; j++) {
+                            Log.w("KYC", subStrs[j]);
+                        }
+                    }
+                }
+            }
+            catch (Exception e) {
+
+            }
+        }
+    }
+
+    private static String[] splitToNChar(String text, int size) {
+        List<String> parts = new ArrayList<>();
+        int length = text.length();
+
+        for (int i = 0; i < length; i += size) {
+            parts.add(text.substring(i, Math.min(length, i + size)));
+        }
+
+        return parts.toArray(new String[0]);
     }
 
     //endregion

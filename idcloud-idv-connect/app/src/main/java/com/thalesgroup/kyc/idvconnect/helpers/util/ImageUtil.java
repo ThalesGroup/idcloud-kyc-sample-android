@@ -27,6 +27,7 @@
 
 package com.thalesgroup.kyc.idvconnect.helpers.util;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
@@ -102,7 +103,7 @@ public class ImageUtil {
         final Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
         final CroppingData data = new CroppingData();
         data.image = bitmap;
-        return AcuantImagePreparation.crop(data);
+        return AcuantImagePreparation.INSTANCE.crop(data);
     }
 
     /**
@@ -115,7 +116,7 @@ public class ImageUtil {
     public static byte[] bitmapToBytes(final Bitmap bitmap) {
         final ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.PNG, 90, stream);
-        bitmap.recycle();
+//        bitmap.recycle();
 
         return stream.toByteArray();
     }
@@ -133,7 +134,7 @@ public class ImageUtil {
         final int newHeight = Math.round(ratio * bitmap.getHeight());
         final int newWidth = Math.round(ratio * bitmap.getWidth());
         final Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
-        bitmap.recycle();
+//        bitmap.recycle();
 
         return resizedBitmap;
     }
@@ -166,6 +167,34 @@ public class ImageUtil {
         }
 
         return Base64.decode(base64, Base64.DEFAULT);
+    }
+
+    /**
+     * Deletes the app cache directory
+     * @param context app context
+     */
+    public static void deleteCache(Context context) {
+        try {
+            File dir = context.getCacheDir();
+            deleteDir(dir);
+        } catch (Exception e) {}
+    }
+
+    private static boolean deleteDir(File dir) {
+        if (dir != null && dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+            return dir.delete();
+        } else if(dir!= null && dir.isFile()) {
+            return dir.delete();
+        } else {
+            return false;
+        }
     }
 
     //endregion

@@ -28,74 +28,79 @@
 package com.thalesgroup.kyc.idv.gui.activity;
 
 import android.content.Intent;
-import android.hardware.Camera;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.TextureView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
+import com.thalesgroup.idv.sdk.doc.api.CaptureCallback;
+import com.thalesgroup.idv.sdk.doc.api.CaptureResult;
+import com.thalesgroup.idv.sdk.doc.api.CaptureSDK;
+import com.thalesgroup.idv.sdk.doc.api.Configuration;
+import com.thalesgroup.idv.sdk.doc.api.Document;
+import com.thalesgroup.kyc.idv.BuildConfig;
 import com.thalesgroup.kyc.idv.R;
 import com.thalesgroup.kyc.idv.gui.MainActivity;
-import com.thalesgroup.kyc.idv.gui.animation.EaseInterpolators;
-import com.thalesgroup.kyc.idv.gui.view.DocumentScanWarningView;
 import com.thalesgroup.kyc.idv.gui.view.DocumentStepDetailView;
 import com.thalesgroup.kyc.idv.gui.view.DocumentStepView;
 import com.thalesgroup.kyc.idv.helpers.AbstractOption;
+import com.thalesgroup.kyc.idv.helpers.KYCConfiguration;
 import com.thalesgroup.kyc.idv.helpers.DataContainer;
 import com.thalesgroup.kyc.idv.helpers.KYCManager;
 import com.thalesgroup.kyc.idv.helpers.util.AssetHelper;
 
-import net.gemalto.mcidsdk.CaptureListener;
-import net.gemalto.mcidsdk.CaptureResult;
-import net.gemalto.mcidsdk.CaptureSDK;
-import net.gemalto.mcidsdk.Metadata;
-import net.gemalto.mcidsdk.ui.CaptureFragment;
-import net.gemalto.mcidsdk.ui.Document;
-import net.gemalto.mcidsdk.ui.PreviewEdgesImageView;
-
-import java.util.EnumSet;
-import java.util.Locale;
-
-import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
-        implements CaptureListener, CaptureListener.DetectionWarningListener {
+        implements CaptureCallback.InitCallback, CaptureCallback.StartCallback {
 
     //region Definition
 
-    // Tutorial steps side panel minimum and maximum size to fit.
-    protected static final int SIDE_MENU_MIN_SIZE_DP = 100;
-    protected static final int SIDE_MENU_MAX_SIZE_DP = 180;
-
-    private static final String TAG = AbstractActivityCaptureDocIDV.class.getName();
+    private static final String TAG = "KYC";
 
     // UI
     protected LinearLayout mLayoutTutorial = null;
     protected FrameLayout mLayoutPreview = null;
-    protected DocumentScanWarningView mDocScanWarning;
-    protected PreviewEdgesImageView mSDKEdgePreview = null;
-    protected CaptureFragment mSDKCaptureView = null;
     protected ImageButton mShutterButton = null;
-    protected RelativeLayout mLayoutResultBackground = null;
     protected ImageView mCaptureFrame = null;
+    protected Configuration mConfiguration = null;
+
+    protected RelativeLayout mLayoutResult = null;
+    protected ImageView mResultImage = null;
+    protected Button mResultOkButton = null;
+    protected Button mResultKoButton = null;
+
+    protected RelativeLayout mLayoutChecks = null;
+    protected TextView mCheckBlur = null;
+    protected TextView mCheckGlare = null;
+    protected TextView mCheckContrast = null;
+    protected TextView mCheckDarkness = null;
+    protected TextView mCheckFocus = null;
+    protected TextView mCheckBW = null;
 
     // Logic
     protected AbstractOption.DocumentType mDocumentType = AbstractOption.DocumentType.IdCard;
     protected int mCurrentStep = 0;
-    protected boolean mCurrentStepProcessed = false;
     protected boolean mPaused = false;
     protected boolean mAutocapture = false;
-    protected boolean mLimitDetectionZone = false;
-    @StringRes
-    protected int mLastWarningMessage = 0;
     protected CaptureSDK mSdk;
 
     //endregion
@@ -108,24 +113,31 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
 
         // Get argument to determine document type.
         mDocumentType = (AbstractOption.DocumentType) getIntent().getSerializableExtra(MainActivity.BUNDLE_ARGUMENT_DOC_TYPE);
-        mLimitDetectionZone = KYCManager.getInstance().isIdCaptureDetectionZoneReduced();
 
         // Load basic visual components.
         initViews();
-
-        // SDK Handle camera permission in case we don't have them already.
-        // Ideally we should update ideal size them, but for demo purposes this is enough.
-        final Camera.Size idealCameraResolution = initIdealCameraResolutionAndUpdateLayout();
-
-        // Initialise SDK with calculated ideal size.
-        initSDK(idealCameraResolution);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        mSdk = new CaptureSDK();
+
+        // SDK Handle camera permission in case we don't have them already.
+
+        mCurrentStep = 0;
+        mPaused = false;
+        mAutocapture = false;
+
+        // Initialise SDK with calculated ideal size.
+        initSDK();
+    }
 
     @Override
     public void onDestroy() {
         if (mSdk != null) {
-            mSdk.releaseMemory();
+            mSdk.finish();
         }
 
         super.onDestroy();
@@ -133,110 +145,175 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
 
     //endregion
 
-
-    //region CaptureListener
-
+    //region SDK CaptureCallback.InitCallback
     @Override
-    public void onSuccess(final byte[] capturedSide1, final byte[] capturedSide2, final Metadata capturedMetadata) {
-        Log.d(TAG, "deprecated onSuccess() method called");
-        // Empty method as the result is handled in new onSuccess method
+    public void onInit(boolean isCompleted, int errorCode) {
+        if (isCompleted) {
+            if (BuildConfig.DEBUG) {
+                Log.i(TAG, "SDK init OK!");
+            }
+
+            // Handle ID related operations like display step etc...
+            runOnUiThread(() -> {
+                if (mDocumentType == AbstractOption.DocumentType.IdCard) {
+                    onScreenChangedIdCard();
+                } else if (mDocumentType == AbstractOption.DocumentType.Passport) {
+                    onScreenChangedPassport();
+                }
+            });
+        } else {
+            Log.e(TAG, "Error on init: 0x" + Integer.toString(errorCode, 16));
+            int errorType = (errorCode & 0x0F00);
+            if(errorType == 0x0000){
+                String[] errorMsg = { "No error found", "Unknown error", "Library not initialized", "Library is already initialized",
+                        "Library init is in progress", "Library stop is in progress", "Library lazy finished",
+                        "Error initializing IQA library", "Error initializing Engine", "Invalid cropping points",
+                        "Invalid image sign", "Invalid image" };
+
+                Log.w(TAG, " - Init error: " + errorMsg[(errorCode & 0xFF)]);
+            }
+            if (errorType == 0x0100) {
+                String[] errorMsg = { "No error found", "Architecture not supported",
+                        "Operating system not supported", "App permissions has been denied" };
+                Log.w(TAG, " - Requirement error: " + errorMsg[(errorCode & 0xFF)]);
+            }
+            if (errorType == 0x0200) {
+                String[] errorMsg = { "No error found", "The license is empty", "The license is expired",
+                        "The feature selected is not present", "The license format is not correct",
+                        "The license has not a valid signing hash", "The license has not a valid version",
+                        "The license has not a valid feature list",
+                        "The license has not a valid expiration date",
+                        "The license has not a valid creation timestamp",
+                        "The license has not a valid cache value" };
+                Log.w(TAG, " - License error: " + errorMsg[(errorCode & 0xFF)]);
+            }
+        }
+    }
+
+    //endregion
+
+    //region CaptureCallback.StartCallback
+    @Override
+    public void onProcessedFrame(final CaptureResult result) {
+
+        // Update quality checks on UI
+        runOnUiThread(() -> {
+            // Ignore all messages while SDK is paused and same as last time.
+            if (!mPaused) {
+                CaptureResult.QualityCheckResults warnings = result.qualityCheckResults;
+
+                if (warnings.blur) {
+                    mCheckBlur.setTextColor(Color.RED);
+                } else if (KYCManager.getInstance().isEnabledBlurQC()) {
+                    mCheckBlur.setTextColor(Color.GREEN);
+                }
+
+                if (warnings.glare) {
+                    mCheckGlare.setTextColor(Color.RED);
+                } else if (KYCManager.getInstance().isEnabledGlareQC()) {
+                    mCheckGlare.setTextColor(Color.GREEN);
+                }
+
+                if (warnings.contrast) {
+                    mCheckContrast.setTextColor(Color.RED);
+                } else {
+                    mCheckContrast.setTextColor(Color.GREEN);
+                }
+
+                if (warnings.darkness) {
+                    mCheckDarkness.setTextColor(Color.RED);
+                } else if (KYCManager.getInstance().isEnabledDarkQC()) {
+                    mCheckDarkness.setTextColor(Color.GREEN);
+                }
+
+                if (warnings.noFocused) {
+                    mCheckFocus.setTextColor(Color.RED);
+                } else {
+                    mCheckFocus.setTextColor(Color.GREEN);
+                }
+
+                if (warnings.photocopy) {
+                    mCheckBW.setTextColor(Color.RED);
+                } else if (KYCManager.getInstance().isEnabledBwQC()) {
+                    mCheckBW.setTextColor(Color.GREEN);
+                }
+            }
+        });
     }
 
     @Override
     public void onSuccess(final CaptureResult captureResult) {
-        Log.d(TAG, "new onSuccess() method called");
+        byte[] croppedImage;
 
-        mSdk.stop();
-        DataContainer.instance().mDocFront = captureResult.getSide1() != null ? captureResult.getSide1().clone() : null;
-        DataContainer.instance().mDocBack = captureResult.getSide2() != null ? captureResult.getSide2().clone() : null;
-
-        if (mDocumentType == AbstractOption.DocumentType.IdCard && captureResult.getSide2() != null ||
-            mDocumentType == AbstractOption.DocumentType.Passport && captureResult.getSide1() != null) {
-
-            final Intent resultIntent = new Intent();
-            setResult(MainActivity.CAPTURE_RETURN_CODE_OK, resultIntent);
-            finish();
+        if (BuildConfig.DEBUG) {
+            Log.w(TAG, "onSuccess()");
         }
-    }
 
-    @Override
-    public void onError(final int errorCode) {
-        Log.d(TAG, "onError(): " + errorCode);
+        stopSDK();
 
-        mSdk.stop();
+        // Get Cropped Image
+        if (captureResult.cropFrame != null) {
+            croppedImage = captureResult.cropFrame.clone();
+        }
 
-        final Intent resultIntent = new Intent();
-        resultIntent.putExtra(MainActivity.CAPTURE_EXTRA_ERROR_CORE, errorCode);
-        setResult(MainActivity.CAPTURE_RETURN_CODE_ERR, resultIntent);
-        finish();
-    }
+        // No cropped image -> try to get full image
+        else {
+            Log.w(TAG, "No cropped image -> Get full image...");
 
-    @Override
-    public void onScreenChanged(final CaptureScreen captureScreen) {
-        // Handle ID related operations like display step etc...
-        runOnUiThread(() -> {
-            if (mDocumentType == AbstractOption.DocumentType.IdCard) {
-                onScreenChangedIdCard(captureScreen);
-            } else if (mDocumentType == AbstractOption.DocumentType.Passport) {
-                onScreenChangedPassport(captureScreen);
-            }
-        });
-    }
+            croppedImage = captureResult.fullFrame.clone();
 
-    //endregion
-
-    //region DetectionWarningListener
-
-    @Override
-    public void onDetectionWarnings(final EnumSet<CaptureSDK.DetectionWarning> warnings) {
-        // Handle ID related operations like display step etc...
-        runOnUiThread(() -> {
-            @StringRes final int message = getMessageResource(warnings);
-
-            // Ignore all messages while SDK is paused and same as last time.
-            if (!mPaused && message != mLastWarningMessage) {
-                if (message != 0) {
-                    mDocScanWarning.display(message, true);
-                } else {
-                    mDocScanWarning.hide(true);
+            if (croppedImage == null) {
+                if (BuildConfig.DEBUG) {
+                    Log.e(TAG, "No cropped image -> Restart capture...");
                 }
-            }
 
-            // Update last message all the time so we can update sdk on resume.
-            mLastWarningMessage = message;
+                startSDK();
+
+                return;
+            }
+        }
+
+        // Front side
+        if (mCurrentStep == 1) {
+            DataContainer.instance().mDocFront = croppedImage;
+        }
+
+        // Back side
+        else if (mCurrentStep == 3) {
+            DataContainer.instance().mDocBack = croppedImage;
+        }
+
+        // Handle ID related operations like display step etc...
+        runOnUiThread(() -> {
+            mLayoutChecks.setVisibility(View.INVISIBLE);
+
+            mLayoutResult.setVisibility(View.VISIBLE);
+            mResultImage.setVisibility(View.VISIBLE);
+            showBitmap(croppedImage, mResultImage);
+            mResultOkButton.setVisibility(View.VISIBLE);
+            mResultKoButton.setVisibility(View.VISIBLE);
         });
     }
-
     //endregion
 
     //region Private Helpers
 
-    private int getMessageResource(final EnumSet<CaptureSDK.DetectionWarning> warnings) {
-        int message = 0;
-
-        if (warnings.contains(CaptureSDK.DetectionWarning.FitDocument)) {
-            message = R.string.doc_scan_warning_fit;
-        }
-        if (warnings.contains(CaptureSDK.DetectionWarning.LowContrast)) {
-            message = R.string.doc_scan_warning_light;
-        }
-        if (warnings.contains(CaptureSDK.DetectionWarning.Hotspot)) {
-            message = R.string.doc_scan_warning_hotspot;
-        }
-        if (warnings.contains(CaptureSDK.DetectionWarning.FocusInProgress)) {
-            message = R.string.doc_scan_warning_focusing;
-        }
-        if (warnings.contains(CaptureSDK.DetectionWarning.LowContrast)) {
-            message = R.string.doc_scan_warning_contrast;
-        }
-        if (warnings.contains(CaptureSDK.DetectionWarning.Blur)) {
-            message = R.string.doc_scan_warning_blur;
-        }
-        if (warnings.contains(CaptureSDK.DetectionWarning.None)) {
-            message = 0;
+    private void startSDK() {
+        if (BuildConfig.DEBUG) {
+            Log.w(TAG, "startSDK()");
         }
 
-        return message;
+        applyConfig();
+
+        mSdk.start(mConfiguration, this);
+    }
+
+    private void stopSDK() {
+        if (BuildConfig.DEBUG) {
+            Log.w(TAG, "stopSDK()");
+        }
+
+        mSdk.stop();
     }
 
     private void initViews() {
@@ -253,101 +330,197 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
         // Camera preview frame. Used as step detail parent.
         mLayoutPreview = findViewById(R.id.view_capture_preview_layout);
 
-        // Custom warning toast. Blurred, hotspot etc...
-        mDocScanWarning = findViewById(R.id.warning_toast);
+        // Quality checks: Blurred, hotspot etc...
+        mLayoutChecks = findViewById(R.id.capture_quality_checks);
+        mCheckBlur = findViewById(R.id.check_blur);
+        mCheckGlare = findViewById(R.id.check_glare);
+        mCheckContrast = findViewById(R.id.check_contrast);
+        mCheckDarkness = findViewById(R.id.check_darkness);
+        mCheckFocus = findViewById(R.id.check_focus);
+        mCheckBW = findViewById(R.id.check_bw);
 
         // Manually control shutter button visibility.
         mShutterButton = findViewById(R.id.take_photo_button);
 
-        // Result background to fade transition
-        //mLayoutResultBackground = findViewById(R.id.result_screen_background);
-        mLayoutResultBackground = findViewById(R.id.mcid_capture_result_layout_custom);
+        // Result Layout
+        mLayoutResult = findViewById(R.id.capture_result_layout);
+        mResultImage = findViewById(R.id.resultDisplay);
+        mResultOkButton = findViewById(R.id.result_accept_button);
+        mResultKoButton = findViewById(R.id.result_reject_button);
 
-        // Hide original SDK overlay and use custom one.
-        findViewById(R.id.overlay_preview).setAlpha(.0f);
-
+        // Capture frame & Hourglass
         mCaptureFrame = findViewById(R.id.capture_frame);
-
-        if (mCaptureFrame != null) {
-            mCaptureFrame.setAlpha(.0f);
-        }
-
-        // Document edge detection overlay. We want to force hide it.
-        mSDKEdgePreview = findViewById(R.id.edges_preview);
+        mCaptureFrame.setAlpha(.0f);
 
         resizeCaptureFrame();
 
+        mLayoutChecks.setVisibility(View.INVISIBLE);
+        mShutterButton.setAlpha(0.f);
+        mShutterButton.setVisibility(View.INVISIBLE);
+        mLayoutResult.setVisibility(View.INVISIBLE);
+        mResultImage.setVisibility(View.INVISIBLE);
+        mResultOkButton.setVisibility(View.INVISIBLE);
+        mResultKoButton.setVisibility(View.INVISIBLE);
+
         // Load side panel with steps based on configuration.
         loadTutorialSteps();
-    }
 
-    private void initSDK(final Camera.Size idealCameraResolution) {
-        final KYCManager managerKYC = KYCManager.getInstance();
+        // Shutter Button
+        mShutterButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mSdk.triggerCapture();
+            }
+        });
 
-        // Get main SDK capture view fragment. It must be present.
-        mSDKCaptureView = (CaptureFragment) getSupportFragmentManager().findFragmentById(R.id.capture_view);
-        if (mSDKCaptureView == null) {
-            throw new IllegalStateException("Failed to get SDK fragment.");
-        }
+        // Result Accept Button
+        mResultOkButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mDocumentType == AbstractOption.DocumentType.IdCard) {
+                    // Front side
+                    if (mCurrentStep == 1) {
+                        mLayoutResult.setVisibility(View.INVISIBLE);
+                        mLayoutChecks.setVisibility(View.INVISIBLE);
 
-        // Update resolution to fit screen ideally.
-        mSDKCaptureView.setDesiredLiveStreamRes(idealCameraResolution.height, idealCameraResolution.width);
-        mSDKCaptureView.setDesiredProcessStreamRes(idealCameraResolution.height, idealCameraResolution.width);
+                        onScreenChangedIdCard();
+                    }
 
-        // Configure the SDK
-        mSdk = mSDKCaptureView.getSDK();
+                    // Back side
+                    if (mCurrentStep == 3) {
+                        mLayoutResult.setVisibility(View.INVISIBLE);
+                        mLayoutChecks.setVisibility(View.INVISIBLE);
 
-        // Document will define size as well as number of pages.
-        if (mDocumentType == AbstractOption.DocumentType.IdCard) {
-            mSdk.setCaptureDocuments(Document.DocumentModeIdDocument);
-        } else if (mDocumentType == AbstractOption.DocumentType.Passport) {
-            mSdk.setCaptureDocuments(Document.DocumentModePassport);
-        }
+                        final Intent resultIntent = new Intent();
+                        setResult(MainActivity.CAPTURE_RETURN_CODE_OK, resultIntent);
+                        finish();
+                    }
+                }
 
-        // Display/Hide shutter button and do capture manually/automatically
-        mAutocapture = !managerKYC.isManualScan();
-        mSdk.setAutoSnapshot(mAutocapture);
+                else if (mDocumentType == AbstractOption.DocumentType.Passport) {
+                    mLayoutResult.setVisibility(View.INVISIBLE);
+                    mLayoutChecks.setVisibility(View.INVISIBLE);
 
-        // Auto crop image based on document edges.
-        // It might still force display cropping in case of failed detection.
-        mSdk.setAutoCropping(managerKYC.isAutomaticTypeDetection());
+                    final Intent resultIntent = new Intent();
+                    setResult(MainActivity.CAPTURE_RETURN_CODE_OK, resultIntent);
+                    finish();
+                }
+            }
+        });
 
-        // Hide result screen after each step.
-        mSdk.setQACheckResultTimeout(3);
+        // Result Reject Button
+        mResultKoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mDocumentType == AbstractOption.DocumentType.IdCard) {
+                    mCurrentStep--;
 
-        // Use faster machine learning.
-        mSdk.setEdgeDetectionMode(CaptureSDK.EEdgeDetectionMode.MachineLearning);
+                    mLayoutResult.setVisibility(View.INVISIBLE);
+                    mLayoutChecks.setVisibility(View.INVISIBLE);
 
-        // To display custom toast overlay.
-        mSdk.setDetectionWarningsListener(this);
+                    onScreenChangedIdCard();
+                }
 
-        // Limit detection zone to 80%
-        if (mLimitDetectionZone) {
-            mSdk.setDetectionZone(80, 1.4204f);
-        }
+                else if (mDocumentType == AbstractOption.DocumentType.Passport) {
+                    mCurrentStep--;
 
-        // Set whenever we want also black and white copy of photo.
-        mSdk.setBWPhotocopyQAEnabled(managerKYC.isBwPhotoCopyQA());
+                    mLayoutResult.setVisibility(View.INVISIBLE);
+                    mLayoutChecks.setVisibility(View.INVISIBLE);
 
-        // Hide the UI elements for each step
-        //mSdk.hideUIElementsForStep(CaptureSDK.CaptureStep.ResultOK);
-        mSdk.hideUIElementsForStep(CaptureSDK.CaptureStep.Detecting);
-
-        // Init the SDK with success handler
-        mSdk.init((final boolean isCompleted, final int errorCode) -> {
-            if (isCompleted) {
-                mSdk.start(this);
-            } else {
-                Log.d(TAG, String.format(Locale.getDefault(), "Error on init (%d)", errorCode));
+                    onScreenChangedPassport();
+                }
             }
         });
     }
 
-    protected abstract void resizeCaptureFrame();
+    private void applyConfig() {
+        mConfiguration = new Configuration();
 
-    protected int dpToPx(final int densityIndependentPixel) {
-        return Math.round((float) densityIndependentPixel * getResources().getDisplayMetrics().density);
+        // Detection Mode
+        mConfiguration.detectionMode = KYCManager.getInstance().getConfigEdgeMode();
+
+        // Document Type
+        if (mDocumentType == AbstractOption.DocumentType.Passport) {
+            mConfiguration.captureDocuments = Document.DocumentModePassport;
+        } else {
+            mConfiguration.captureDocuments = Document.DocumentModeIdDocument;
+        }
+
+        // Enable / Disable QC depending on configuration
+
+        // Blur
+        if (!KYCManager.getInstance().isEnabledBlurQC()) {
+            mConfiguration.qualityChecks.blurDetectionMode = Configuration.Disabled;
+        } else {
+            mConfiguration.qualityChecks.blurDetectionMode = Configuration.Strict;
+        }
+
+        // Glare
+        if (!KYCManager.getInstance().isEnabledGlareQC()) {
+            mConfiguration.qualityChecks.glareDetectionMode = Configuration.Disabled;
+        } else {
+            mConfiguration.qualityChecks.glareDetectionMode = Configuration.Color;
+        }
+
+        // Darkness
+        if (!KYCManager.getInstance().isEnabledDarkQC()) {
+            mConfiguration.qualityChecks.darknessDetectionMode = Configuration.Disabled;
+        } else {
+            mConfiguration.qualityChecks.darknessDetectionMode = Configuration.Relaxed;
+        }
+
+        // BW photocopy
+        if (!KYCManager.getInstance().isEnabledBwQC()) {
+            mConfiguration.qualityChecks.photocopyDetectionMode = Configuration.Disabled;
+        } else {
+            mConfiguration.qualityChecks.photocopyDetectionMode = Configuration.BlackAndWhite;
+        }
+
+        if (BuildConfig.DEBUG) {
+            Log.w(TAG, "SDK Configuration:");
+            Log.i(TAG, "Detection Mode: " + mConfiguration.detectionMode);
+            Log.i(TAG, "Blur: " + mConfiguration.qualityChecks.blurDetectionMode);
+            Log.i(TAG, "Glare: " + mConfiguration.qualityChecks.glareDetectionMode);
+            Log.i(TAG, "Darkness: " + mConfiguration.qualityChecks.darknessDetectionMode);
+            Log.i(TAG, "BW: " + mConfiguration.qualityChecks.photocopyDetectionMode);
+        }
+
+        // Update UI
+        runOnUiThread(() -> {
+            // Blur
+            if (!KYCManager.getInstance().isEnabledBlurQC()) {
+                mCheckBlur.setTextColor(Color.GRAY);
+            }
+
+            // Glare
+            if (!KYCManager.getInstance().isEnabledGlareQC()) {
+                mCheckGlare.setTextColor(Color.GRAY);
+            }
+
+            // Darkness
+            if (!KYCManager.getInstance().isEnabledDarkQC()) {
+                mCheckDarkness.setTextColor(Color.GRAY);
+            }
+
+            // BW photocopy
+            if (!KYCManager.getInstance().isEnabledBwQC()) {
+                mCheckBW.setTextColor(Color.GRAY);
+            }
+        });
     }
+
+    private void initSDK() {
+        final KYCManager managerKYC = KYCManager.getInstance();
+
+        // Display/Hide shutter button and do capture manually/automatically
+        mAutocapture = !managerKYC.isManualScan();
+
+        // Init the SDK with success handler
+        TextureView view = findViewById(R.id.camera);
+        mSdk.init(KYCConfiguration.IDV_LICENSE, view, this);
+    }
+
+    protected abstract void resizeCaptureFrame();
 
     private void loadTutorialSteps() {
         // In case of some reusable view. Remove all current children.
@@ -380,55 +553,54 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
         }
     }
 
+    private void turnCard() {
+        runOnUiThread(() -> {
+            mLayoutResult.setVisibility(View.INVISIBLE);
+            mLayoutChecks.setVisibility(View.INVISIBLE);
+        });
+
+        onScreenChangedIdCard();
+    }
+
     private void pauseSDK() {
-        // By disabling auto-snapshot we will prevent SDK to continue automatically.
-        mSDKCaptureView.getSDK().setAutoSnapshot(false);
-        // Make sure, that edges will stay hidden.
-        mSDKEdgePreview.setAlpha(.0f);
+        runOnUiThread(() -> {
+            mLayoutChecks.setVisibility(View.INVISIBLE);
+            mShutterButton.setAlpha(0.f);
+            mShutterButton.setVisibility(View.INVISIBLE);
+            mCaptureFrame.setVisibility(View.INVISIBLE);
+        });
 
         // Pause tracking SDK callbacks.
         mPaused = true;
-
     }
 
     private void resumeSDK() {
-        // Continue auto-capture.
-        mSDKCaptureView.getSDK().setAutoSnapshot(mAutocapture);
+        startSDK();
 
-        // We have to update shutter button manually.
-        if (!mAutocapture) {
-            mShutterButton.setAlpha(1.f);
-            mShutterButton.setVisibility(View.VISIBLE);
-        }
+        runOnUiThread(() -> {
+            mLayoutResult.setVisibility(View.INVISIBLE);
+            mResultImage.setVisibility(View.INVISIBLE);
+            mResultOkButton.setVisibility(View.INVISIBLE);
+            mResultKoButton.setVisibility(View.INVISIBLE);
 
-        // Make sure, that edges will stay hidden.
-        mSDKEdgePreview.setAlpha(.0f);
+            mCaptureFrame.setVisibility(View.VISIBLE);
 
-        // Display any warning message triggered by SDK while processing was paused.
-        if (mLastWarningMessage != 0) {
-            mDocScanWarning.display(mLastWarningMessage, true);
-        }
+            // We have to update shutter button manually.
+            if (!mAutocapture) {
+                mShutterButton.setAlpha(1.f);
+                mShutterButton.setVisibility(View.VISIBLE);
+            }
+
+            mLayoutChecks.setVisibility(View.VISIBLE);
+        });
 
         // Resume tracking SDK callbacks.
         mPaused = false;
     }
 
-    private void onScreenChangedIdCard(final CaptureScreen captureScreen) {
-        if (captureScreen == CaptureScreen.InResultOK) {
-            mLayoutResultBackground.animate().alpha(1.0f)
-                                   .setDuration(1000)
-                                   .setInterpolator(new EaseInterpolators.EaseInOut()).start();
-        } else if (captureScreen == CaptureScreen.OutResultOK) {
-            // Image is automatically hidden by SDK. We want to animate it with parent.
-            findViewById(R.id.resultDisplay).setVisibility(View.VISIBLE);
-            mLayoutResultBackground.animate().alpha(.0f)
-                    .setDuration(1000)
-                    .setInterpolator(new EaseInterpolators.EaseInOut()).start();
-        }
-
-        // Initial step. Scanning front document side.
-        if (mCurrentStep == 0 && captureScreen == CaptureScreen.InDetecting
-            && !mCurrentStepProcessed) {
+    private void onScreenChangedIdCard() {
+        // Scanning front document side.
+        if (mCurrentStep == 0 ) {
             // SDK is loaded and start scanning documents. Display first step.
             // Highlight side menu item
             highlightStep(0, true);
@@ -438,72 +610,99 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
                                                                                  R.string.kyc_doc_scan_detail_top,
                                                                                  R.string.kyc_doc_scan_detail_bottom,
                                                                                  AssetHelper.ASSET_DOC_STEP_ID_CARD_FRONT);
-            stepDetail.presentInGroupView(mLayoutPreview, mCaptureFrame, this::resumeSDK);
+            stepDetail.presentInGroupView(mLayoutPreview, mCaptureFrame, this::resumeSDK, false);
 
             // Pause SDK while detail is visible.
             pauseSDK();
-            mCurrentStepProcessed = true;
-        } else if (mCurrentStep == 0 && captureScreen == CaptureScreen.OutResultOK) {
+            mCurrentStep++;
+        }
+        // Turn the document on back side.
+        else if (mCurrentStep == 1 ) {
             // SDK did successfully scanned front document side.
             // Highlight next step in side menu. No overlay view at this point.
             highlightStep(0, false);
+
             // Use cheap method with already flipped image to save dev time.
             highlightAndRotateStep(1, AssetHelper.ASSET_DOC_STEP_ID_CARD_BACK_FLIPPED);
-            ++mCurrentStep;
-            mCurrentStepProcessed = false;
 
-            // Do we want overlay here or not?
-            // Animate overlay with same progress
-            if (mCaptureFrame != null) {
-                mCaptureFrame.animate().alpha(.0f).setDuration(500)
-                             .setInterpolator(new EaseInterpolators.EaseInOut()).start();
+            // Display step detail overlay.
+            final DocumentStepDetailView stepDetail = new DocumentStepDetailView(this,
+                    R.string.kyc_doc_turn_detail_top,
+                    R.string.kyc_doc_turn_detail_bottom,
+                    AssetHelper.ASSET_DOC_STEP_ID_CARD_BACK_FLIPPED);
+            stepDetail.presentInGroupView(mLayoutPreview, mCaptureFrame, this::turnCard, true);
+
+            // Pause SDK while detail is visible.
+            pauseSDK();
+            mCurrentStep++;
+
+            // Auto hide Success result
+            Timer timer = new Timer(true);
+
+            try
+            {
+                TimerTask timerTask = new TimerTask()
+                {
+                    @Override
+                    public void run()
+                    {
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                mLayoutResult.setVisibility(View.INVISIBLE);
+                            }
+                        });
+                    }
+                };
+
+                timer.schedule(timerTask, 3000);
             }
-        } else if (mCurrentStep == 1 && captureScreen == CaptureScreen.InDetecting
-                   && !mCurrentStepProcessed) {
+            catch(Exception e)
+            {
+                Log.e("KYC", e.toString());
+            }
+        }
+
+        // Scanning back document side.
+        else if (mCurrentStep == 2 ) {
             // Scanning back document side.
             // Highlight next step in side menu. No overlay view at this point.
             highlightStep(1, false);
             highlightStep(2, true);
 
-            // Display step detail overlay.
-            final DocumentStepDetailView stepDetail = new DocumentStepDetailView(this,
-                                                                                 R.string.kyc_doc_scan_detail_top,
-                                                                                 R.string.kyc_doc_scan_detail_bottom,
-                                                                                 AssetHelper.ASSET_DOC_STEP_ID_CARD_BACK);
-            stepDetail.presentInGroupView(mLayoutPreview, mCaptureFrame, this::resumeSDK);
-
-            // Pause SDK while detail is visible.
-            pauseSDK();
-            mCurrentStepProcessed = true;
+            resumeSDK();
+            mCurrentStep++;
         }
     }
 
-    private void onScreenChangedPassport(final CaptureScreen captureScreen) {
-        // Initial step. Scanning front document side.
-        // SDK is loaded and start scanning documents. Display first step.
-        if (mCurrentStep == 0 && captureScreen == CaptureScreen.InDetecting
-            && !mCurrentStepProcessed) {
-            // Highlight side menu item
-            highlightStep(0, true);
+    private void onScreenChangedPassport() {
+        // Highlight side menu item
+        highlightStep(0, true);
 
-            // Display step detail overlay.
-            final DocumentStepDetailView stepDetail = new DocumentStepDetailView(this,
-                                                                                 R.string.kyc_doc_scan_detail_top,
-                                                                                 R.string.kyc_doc_scan_detail_bottom,
-                                                                                 AssetHelper.ASSET_DOC_STEP_PASSPORT);
-            stepDetail.presentInGroupView(mLayoutPreview, mCaptureFrame, this::resumeSDK);
+        // Display step detail overlay.
+        final DocumentStepDetailView stepDetail = new DocumentStepDetailView(this,
+                                                                             R.string.kyc_doc_scan_detail_top,
+                                                                             R.string.kyc_doc_scan_detail_bottom,
+                                                                             AssetHelper.ASSET_DOC_STEP_PASSPORT);
+        stepDetail.presentInGroupView(mLayoutPreview, mCaptureFrame, this::resumeSDK, false);
 
-            // Pause SDK while detail is visible.
-            pauseSDK();
-            mCurrentStepProcessed = true;
-        }
+        // Pause SDK while detail is visible.
+        pauseSDK();
+        mCurrentStep++;
     }
 
-    //endregion
+    private void showBitmap(final byte[] data,
+                            final ImageView imageView) {
+        if (data != null) {
+            final Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+            final DisplayMetrics displayMetrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
-    //region Abstract methods
-
-    abstract Camera.Size initIdealCameraResolutionAndUpdateLayout();
-
+            imageView.setMinimumHeight(displayMetrics.heightPixels);
+            imageView.setMinimumWidth(displayMetrics.widthPixels);
+            imageView.setImageBitmap(bitmap);
+        } else {
+            imageView.setVisibility(View.GONE);
+        }
+    }
     //endregion
 }

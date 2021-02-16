@@ -46,11 +46,11 @@ public class KycAlert {
     //region Life Cycle
 
     public KycAlert(final JSONObject alert) {
-        mDesc = JsonUtil.jsonGetString(alert, "Description", null);
-        mDesposition = JsonUtil.jsonGetString(alert, "Disposition", null);
-        mInformation = JsonUtil.jsonGetString(alert, "Information", null);
-        mName = JsonUtil.jsonGetString(alert, "Name", null);
-        mResult = JsonUtil.jsonGetString(alert, "Result", null);
+        mDesc = JsonUtil.jsonGetString(alert, "Description", "Unknown");
+        mDesposition = JsonUtil.jsonGetString(alert, "Disposition", "Unknown");
+        mInformation = JsonUtil.jsonGetString(alert, "Information", "Unknown");
+        mName = JsonUtil.jsonGetString(alert, "Name", "Unknown");
+        mResult = JsonUtil.jsonGetString(alert, "Result", "Unknown");
     }
 
     //endregion

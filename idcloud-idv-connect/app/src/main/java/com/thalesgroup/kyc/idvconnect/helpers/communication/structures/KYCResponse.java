@@ -48,6 +48,9 @@ public class KYCResponse implements Serializable {
     private final String mType;
     private final int mCode;
     private KYCDocument mDocument = null;
+    private KycFace mFace = null;
+    private KycLivenessResult mLivenessResult = null;
+    private KycEnhancedLivenessResult mEnhancedLivenevessResult = null;
 
     //endregion
 
@@ -62,14 +65,23 @@ public class KYCResponse implements Serializable {
      */
     public KYCResponse(@NonNull final JSONObject response) throws JSONException {
         mCode = JsonUtil.jsonGetInt(response, "code", -1);
-        mMessage = JsonUtil.jsonGetString(response,"message", null);
-        mType =  JsonUtil.jsonGetString(response, "type", null);
+        mMessage = JsonUtil.jsonGetString(response,"message", "Unknown");
+        mType =  JsonUtil.jsonGetString(response, "type", "Unknown");
 
         // All objects are optional, we might not get them from server.
         if (response.has("object")) {
             final JSONObject object = response.getJSONObject("object");
             if (object.has("document")) {
                 mDocument = new KYCDocument(object.getJSONObject("document"));
+            }
+            if (object.has("face")) {
+                mFace = new KycFace(object.getJSONObject("face"));
+            }
+            if (object.has("livenessResult")) {
+                mLivenessResult = new KycLivenessResult(object.getJSONObject("livenessResult"));
+            }
+            if (object.has("enhancedLiveness")) {
+                mEnhancedLivenevessResult = new KycEnhancedLivenessResult(object.getJSONObject("enhancedLiveness"));
             }
         }
     }
@@ -94,7 +106,7 @@ public class KYCResponse implements Serializable {
      */
     public String getMessageReadable() {
         if (mMessage == null) {
-            return null;
+            return "";
         }
 
         // Messages looks like "[5eb47d75-71f7-4b36-a273-8ddfe7e985bc] Internal service error". Strip down first ID part.
@@ -139,6 +151,33 @@ public class KYCResponse implements Serializable {
      */
     public KYCDocument getDocument() {
         return mDocument;
+    }
+
+    /**
+     * Gets the {@code KycFace}.
+     *
+     * @return {@code KycFace}.
+     */
+    public KycFace getFace() {
+        return mFace;
+    }
+
+    /**
+     * Gets the {@code KycLivenessResult}.
+     *
+     * @return {@code KycLivenessResult}.
+     */
+    public KycLivenessResult getLivenessResult() {
+        return mLivenessResult;
+    }
+
+    /**
+     * Gets the {@code KycEnhancedLivenessResult}.
+     *
+     * @return {@code KycEnhancedLivenessResult}.
+     */
+    public KycEnhancedLivenessResult getEnhancedLivenessResult() {
+        return mEnhancedLivenevessResult;
     }
 
 

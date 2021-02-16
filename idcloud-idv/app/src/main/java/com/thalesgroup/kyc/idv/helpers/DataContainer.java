@@ -27,9 +27,7 @@
 
 package com.thalesgroup.kyc.idv.helpers;
 
-import net.gemalto.mcidsdk.ui.Document;
-
-import java.util.List;
+import com.thalesgroup.kyc.idv.helpers.communication.KYCCommunication;
 
 public final class DataContainer {
 
@@ -40,12 +38,14 @@ public final class DataContainer {
     // doc data IDV
     public byte[] mDocFront;
     public byte[] mDocBack;
-    public List<Document> docList;
-    public boolean docAutoSnapshot;
-    // face data
-    public byte[] mSelfie;
-    public byte[] mFaceTemplate;
 
+    // Selfie data
+    public byte[] mSelfie;
+    public String mEnhancedSelfieJson;
+
+    // Server session data
+    public int mVerificationStep = KYCCommunication.STEP_START_VERIFICATION;
+    public KYCCommunication mKYCCommunication;
     //endregion
 
     //region Life Cycle
@@ -56,6 +56,7 @@ public final class DataContainer {
     public synchronized static DataContainer instance() {
         if (sInstance == null) {
             sInstance = new DataContainer();
+            sInstance.mKYCCommunication = new KYCCommunication();
         }
         return sInstance;
     }
@@ -67,10 +68,9 @@ public final class DataContainer {
     public void clearDocData() {
         mDocFront = null;
         mDocBack = null;
-        docList = null;
         mSelfie = null;
-        mFaceTemplate = null;
-        docAutoSnapshot = false;
+        mEnhancedSelfieJson = null;
+        mVerificationStep = KYCCommunication.STEP_START_VERIFICATION;
     }
 
     //endregion

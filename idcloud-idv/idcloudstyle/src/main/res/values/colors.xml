@@ -37,6 +37,7 @@
     <color name="colorButtonNegativeBackgroundPressed">#80FB4E54</color>
 
     <!--Overlay Fragments-->
+    <color name="colorOverlayBackgroundBlack">#000000</color>
     <color name="colorOverlayBackgroundDark">#B0505050</color>
     <color name="colorOverlayBackground">#65505050</color>
     <color name="colorOverlayGradientStart">#D8D8D8</color>

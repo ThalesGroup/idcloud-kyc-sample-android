@@ -78,7 +78,7 @@ public class FragmentHome extends AbstractFragmentBase {
     public void onResume() {
         super.onResume();
 
-        if (KYCManager.getInstance().getJsonWebToken() != null) {
+        if (KYCManager.getInstance().getBaseCredentials() != null) {
             mTextInit.setVisibility(View.GONE);
             mButtonNext.setText(R.string.fragment_home_button_enroll);
         } else {
@@ -95,7 +95,7 @@ public class FragmentHome extends AbstractFragmentBase {
      * On click listener for the next button.
      */
     private void onButtonClickNext() {
-        if (KYCManager.getInstance().getJsonWebToken() != null) {
+        if (KYCManager.getInstance().getKycQRCodeVersion() != null) {
             getMainActivity().displayFragment(new FragmentFirstStep(), true, true);
         } else {
             KYCManager.getInstance().displayQRcodeScannerForInit();

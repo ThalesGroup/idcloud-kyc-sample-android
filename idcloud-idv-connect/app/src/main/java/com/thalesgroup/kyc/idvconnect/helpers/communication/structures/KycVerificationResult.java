@@ -40,7 +40,7 @@ public class KycVerificationResult {
 
     //region Definition
 
-    private final String mResult;
+    private String mResult;
     private final String mFirstName;
     private final String mMiddleName;
     private final String mSurname;
@@ -60,8 +60,8 @@ public class KycVerificationResult {
     //region Life Cycle
 
     public KycVerificationResult(final JSONObject response) throws JSONException {
-        mResult = JsonUtil.jsonGetString(response, "result", null);
-        mFirstName = JsonUtil.jsonGetString(response, "firstName", null);
+        mResult = JsonUtil.jsonGetString(response, "result", "Unknown");
+        mFirstName = JsonUtil.jsonGetString(response, "firstName", "null");
         mMiddleName = JsonUtil.jsonGetString(response,"middleName", null);
         mSurname = JsonUtil.jsonGetString(response,"surname", null);
         mGender = JsonUtil.jsonGetString(response,"gender", null);
@@ -81,6 +81,11 @@ public class KycVerificationResult {
             final JSONObject alert = alerts.getJSONObject(i);
             final KycAlert kycAlert = new KycAlert(alert);
             mAlerts.add(kycAlert);
+        }
+
+        // Failed -> Attention
+        if (mResult.equalsIgnoreCase("Failed")) {
+            mResult = "Attention";
         }
     }
 

@@ -42,8 +42,10 @@ public class KYCSession {
 
     //region Definition
 
-    static final String COMMON_STATE_FAILED = "Failed";
-    static final String COMMON_STATE_ERROR = "Error";
+    public static final int RETRY_NONE = 0;
+    public static final int RETRY_DOC_SCAN = 1;
+    public static final int RETRY_SELFIE_SCAN = 2;
+    public static final int RETRY_ABORT = 3;
 
     /**
      * Callback.
@@ -62,6 +64,23 @@ public class KYCSession {
          * @param error Error received from verification server.
          */
         void onFailure(final String error);
+
+        /**
+         * Error during communication with verification server.
+         * Manage auto retry.
+         *
+         * @param error Error received from verification server.
+         * @param retryStep Step to retry (Doc scan or Selfie).
+         */
+        void onFailureRetry(final String error, int retryStep);
+
+        /**
+         * Error during communication with verification server.
+         * Manage abort.
+         *
+         * @param error Error received from verification server.
+         */
+        void onFailureAbort(final String error);
     }
 
     private int mTryCount;
@@ -90,6 +109,9 @@ public class KYCSession {
     //endregion
 
     //region Public API
+    void setHandler(KYCResponseHandler handler) {
+        mHandler = handler;
+    }
 
     /**
      * Gets the try counter.
@@ -125,8 +147,30 @@ public class KYCSession {
      * @return URL.
      * @throws MalformedURLException If URL is malformed.
      */
-    URL getUrlDocumennt() throws MalformedURLException {
+    URL getUrlDocument() throws MalformedURLException {
         final String url = mURLBase + "/" + mSessionId + "/state/steps/verifyResults";
+        return new URL(url);
+    }
+
+    /**
+     * Gets the URL.
+     *
+     * @return URL.
+     * @throws MalformedURLException If URL is malformed.
+     */
+    URL getUrlDocumentFront() throws MalformedURLException {
+        final String url = mURLBase + "/" + mSessionId + "/state/steps/frontWhiteImage";
+        return new URL(url);
+    }
+
+    /**
+     * Gets the URL.
+     *
+     * @return URL.
+     * @throws MalformedURLException If URL is malformed.
+     */
+    URL getUrlDocumentBack() throws MalformedURLException {
+        final String url = mURLBase + "/" + mSessionId + "/state/steps/backWhiteImage";
         return new URL(url);
     }
 
@@ -138,6 +182,39 @@ public class KYCSession {
      */
     URL getUrlSelfie() throws MalformedURLException {
         final String url = mURLBase + "/" + mSessionId +"/state/steps/faceMatch";
+        return new URL(url);
+    }
+
+    /**
+     * Gets the URL.
+     *
+     * @return URL.
+     * @throws MalformedURLException If URL is malformed.
+     */
+    URL getUrlPassiveLivenessPollResult() throws MalformedURLException {
+        final String url = mURLBase + "/" + mSessionId;
+        return new URL(url);
+    }
+
+    /**
+     * Gets the URL.
+     *
+     * @return URL.
+     * @throws MalformedURLException If URL is malformed.
+     */
+    URL getUrlEnhancedLiveness() throws MalformedURLException {
+        final String url = mURLBase + "/" + mSessionId +"/state/steps/enhancedLiveness";
+        return new URL(url);
+    }
+
+    /**
+     * Gets the URL.
+     *
+     * @return URL.
+     * @throws MalformedURLException If URL is malformed.
+     */
+    URL getUrlEnhancedLivenessPollResult() throws MalformedURLException {
+        final String url = mURLBase + "/" + mSessionId;
         return new URL(url);
     }
 
@@ -159,6 +236,31 @@ public class KYCSession {
         // Call handler in UI thread.
         if (mHandler != null) {
             new Handler(Looper.getMainLooper()).post(() -> mHandler.onFailure(error));
+        }
+    }
+
+    /**
+     * Calls the retry error handler.
+     *
+     * @param error Error received from verification server.
+     * @param retryStep Step to retry (Doc scan or Selfie).
+     */
+    synchronized void handleErrorRetry(final String error, int retryStep) {
+        // Call handler in UI thread.
+        if (mHandler != null) {
+            new Handler(Looper.getMainLooper()).post(() -> mHandler.onFailureRetry(error, retryStep));
+        }
+    }
+
+    /**
+     * Calls the abort error handler.
+     *
+     * @param error Error received from verification server.
+     */
+    synchronized void handleErrorAbort(final String error) {
+        // Call handler in UI thread.
+        if (mHandler != null) {
+            new Handler(Looper.getMainLooper()).post(() -> mHandler.onFailureAbort(error));
         }
     }
 

@@ -40,7 +40,7 @@ import androidx.annotation.NonNull;
 public class KYCFailedVerification {
     //region Definition
 
-    private final String mCategoty;
+    private final String mCategory;
     private final String mName;
     private final String mType;
     private final int mScore;
@@ -57,7 +57,7 @@ public class KYCFailedVerification {
      * @throws JSONException If value not found in passed response.
      */
     KYCFailedVerification(@NonNull final JSONObject response) throws JSONException {
-        mCategoty = JsonUtil.jsonGetString(response, "category", null);
+        mCategory = JsonUtil.jsonGetString(response, "category", null);
         mName = JsonUtil.jsonGetString(response, "name", null);
         mType = JsonUtil.jsonGetString(response, "type", null);
         mScore = JsonUtil.jsonGetInt(response, "score", -1);
@@ -75,8 +75,8 @@ public class KYCFailedVerification {
      *
      * @return Category
      */
-    public String getCategoty() {
-        return mCategoty;
+    public String getCategory() {
+        return mCategory;
     }
 
     /**

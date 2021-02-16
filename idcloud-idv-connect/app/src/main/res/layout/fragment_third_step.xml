@@ -32,27 +32,27 @@
         android:id="@+id/fragment_third_step_caption"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/dimensionMarginNormal"
-        android:layout_gravity="start"
-        android:gravity="start"
+        android:layout_margin="@dimen/dimensionMarginSmall"
+        android:layout_gravity="center"
+        android:gravity="center"
         android:textSize="@dimen/dimensionTextSizeHeader"
         android:textColor="@color/colorTextPrimary"
-        android:text="@string/fragment_id_card_caption" />
+        android:text="@string/STRING_KYC_DOC_SCAN_CAPTION_IDCARD" />
 
     <TextView
         android:id="@+id/fragment_third_step_description_01"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/dimensionMarginNormal"
+        android:layout_margin="@dimen/dimensionMarginSmall"
         android:textColor="@color/colorTextPrimary"
-        android:text="@string/fragment_id_card_description_first" />
+        android:text="@string/STRING_KYC_DOC_SCAN_01" />
 
     <ImageView
         android:id="@+id/fragment_third_step_image_01"
         android:layout_weight="1"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_margin="@dimen/dimensionMarginNormal"
+        android:layout_margin="@dimen/dimensionMarginMinimal"
         android:contentDescription="@android:string/untitled"
         android:adjustViewBounds="true"
         tools:srcCompat="@tools:sample/backgrounds/scenic" />
@@ -61,16 +61,16 @@
         android:id="@+id/fragment_third_step_description_02"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/dimensionMarginNormal"
+        android:layout_margin="@dimen/dimensionMarginSmall"
         android:textColor="@color/colorTextPrimary"
-        android:text="@string/fragment_id_card_description_second" />
+        android:text="@string/STRING_KYC_DOC_SCAN_02" />
 
     <ImageView
         android:id="@+id/fragment_third_step_image_02"
         android:layout_weight="1"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_margin="@dimen/dimensionMarginNormal"
+        android:layout_margin="@dimen/dimensionMarginSmall"
         android:contentDescription="@android:string/untitled"
         android:adjustViewBounds="true"
         tools:srcCompat="@tools:sample/backgrounds/scenic"/>

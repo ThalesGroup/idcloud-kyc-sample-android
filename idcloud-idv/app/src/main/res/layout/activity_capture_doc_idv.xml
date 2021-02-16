@@ -26,12 +26,9 @@
     android:layout_height="match_parent"
     android:background="@android:color/holo_blue_bright">
 
-    <fragment
-        android:id="@+id/capture_view"
-        android:name="net.gemalto.mcidsdk.ui.CaptureFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <include layout="@layout/view_capture"
+        android:layout_weight="1"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"/>
 
 </LinearLayout>

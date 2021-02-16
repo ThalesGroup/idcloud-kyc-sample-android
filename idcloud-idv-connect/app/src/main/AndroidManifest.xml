@@ -7,9 +7,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.NFC" />
-
-    <uses-feature android:name="android.hardware.usb.host" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -47,7 +44,9 @@
         <activity android:name="com.thalesgroup.kyc.idvconnect.gui.activity.FacialLivenessActivity"
             android:screenOrientation="portrait"/>
 
-
+        <activity
+            android:name=".gui.activity.AwareLivenessActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

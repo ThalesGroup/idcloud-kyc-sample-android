@@ -56,7 +56,7 @@ public class KYCFace {
      * @throws JSONException If value not found in passed response.
      */
     KYCFace(@NonNull final JSONObject response) throws JSONException {
-        mResult = JsonUtil.jsonGetString(response, "result", null);
+        mResult = JsonUtil.jsonGetString(response, "result", "NO_MATCH");
         mImage = ImageUtil.imageFromBase64(JsonUtil.jsonGetString(response, "image", null));
         mScore = JsonUtil.jsonGetInt(response, "score", -1);
     }

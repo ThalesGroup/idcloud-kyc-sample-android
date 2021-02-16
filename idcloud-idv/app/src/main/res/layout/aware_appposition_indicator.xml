@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/apppositionIndicator"
+    android:layout_width="match_parent"
+    android:layout_height="10dp"
+    android:layout_marginLeft="8dp"
+    android:layout_marginRight="8dp"
+    android:layout_marginTop="0dp"
+    android:orientation="horizontal"
+    android:layout_marginStart="0dp"
+    android:layout_marginEnd="0dp"
+    >
+
+    <ImageView
+        android:id="@+id/positionIndicator0"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+/>
+
+    <ImageView
+        android:id="@+id/positionIndicator1"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+/>
+
+    <ImageView
+        android:id="@+id/positionIndicator2"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+/>
+
+    <ImageView
+        android:id="@+id/positionIndicator3"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+/>
+
+    <ImageView
+        android:id="@+id/positionIndicator4"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+/>
+
+    <ImageView
+        android:id="@+id/positionIndicator5"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+/>
+
+    <ImageView
+        android:id="@+id/positionIndicator6"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+/>
+
+    <ImageView
+        android:id="@+id/positionIndicator7"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+/>
+
+    <ImageView
+        android:id="@+id/positionIndicator8"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+/>
+</LinearLayout>

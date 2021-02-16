@@ -1,14 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
     defaultConfig {
         applicationId "com.thalesgroup.kyc.idv"
         minSdkVersion 21
-        targetSdkVersion 28
-        versionCode 14
-        versionName "1.0"
+        targetSdkVersion 29
+        versionCode 321008
+        versionName "3.2.1-008"
         testInstrumentationRunner "androidx.move_in_from_left.runner.AndroidJUnitRunner"
+        ndkVersion '16.1.4479499'
     }
     buildTypes {
         release {
@@ -24,17 +25,17 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir:'libs', include: ['*.jar'])
-    implementation 'com.android.support:support-v4:28.0.0'
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.android.support:design:28.0.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.android.support:support-vector-drawable:28.0.0'
-    implementation 'com.android.support:support-vector-drawable:28.0.0'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:support-v4:29.0.0'
+    implementation 'com.android.support:appcompat-v7:29.0.0'
+    implementation 'com.android.support:design:29.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:2.0.3'
+    implementation 'com.android.support:support-vector-drawable:29.0.0'
+    implementation 'com.android.support:support-vector-drawable:29.0.0'
     implementation 'com.madgag.spongycastle:core:1.58.0.0'
 
     // JNA lib
-    implementation 'net.java.dev.jna:jna:4.5.0@aar'
+    implementation 'net.java.dev.jna:jna:5.5.0@aar'
 
     // UI Style
     implementation project(':idcloudstyle')
@@ -43,9 +44,10 @@ dependencies {
     implementation 'me.dm7.barcodescanner:zxing:1.9.8'
 
     // IDV
-    implementation(name:'IDV_Doc-release', ext:'aar')
-    releaseImplementation(name:'IDV_Face_NT-release', ext:'aar')
-    debugImplementation(name:'IDV_Face_NT-debug', ext:'aar')
+    implementation(name:'IDV_DOC', ext:'aar')
+
+    // Aware
+    implementation(name:'Knomi-S-Face-SDK-release_x', ext:'aar')
 
     // JWTDecode
     implementation 'com.auth0.android:jwtdecode:1.4.0'

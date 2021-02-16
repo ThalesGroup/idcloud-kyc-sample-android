@@ -38,6 +38,7 @@ import android.widget.TextView;
 import com.thalesgroup.kyc.idv.R;
 import com.thalesgroup.kyc.idv.gui.MainActivity;
 import com.thalesgroup.kyc.idv.helpers.AbstractOption;
+import com.thalesgroup.kyc.idv.helpers.DataContainer;
 import com.thalesgroup.kyc.idv.helpers.KYCManager;
 import com.thalesgroup.kyc.idv.helpers.util.AssetHelper;
 
@@ -59,6 +60,8 @@ public class FragmentThirdStep extends AbstractFragmentBase {
     public View onCreateView(final LayoutInflater inflater,
                              final ViewGroup container,
                              final Bundle savedInstanceState) {
+        DataContainer.instance().clearDocData();
+
         final View retValue = inflater.inflate(R.layout.fragment_third_step, container, false);
 
         // Get all elements.
@@ -93,6 +96,8 @@ public class FragmentThirdStep extends AbstractFragmentBase {
         // User Interface
         buttonNext.setOnClickListener(view -> onButtonPressedNext());
 
+        DataContainer.instance().clearDocData();
+
         return retValue;
     }
 
@@ -117,19 +122,16 @@ public class FragmentThirdStep extends AbstractFragmentBase {
     }
 
     private int labelForIndex(final int index) {
-        final boolean automatic = KYCManager.getInstance().isAutomaticTypeDetection();
-        final String mode = automatic ? "AUTO" : "MANUAL";
-        final String stringKey = String.format(Locale.ENGLISH,"STRING_KYC_DOC_SCAN_%02d_%s", index, mode);
+        final String stringKey = String.format(Locale.ENGLISH,"STRING_KYC_DOC_SCAN_%02d", index);
 
         return KYCManager.getResId(stringKey, R.string.class);
     }
 
     private String imageForIndex(final int index) {
-        final boolean automatic = KYCManager.getInstance().isAutomaticTypeDetection();
+        final boolean automatic = true;
         final String type = mDocumentType == AbstractOption.DocumentType.Passport ? "passport" : "id_card";
-        final String mode = automatic ? "auto" : "manual";
 
-        return String.format(Locale.ENGLISH,"kyc_third_step_%s_%02d_%s.png", type, index, mode);
+        return String.format(Locale.ENGLISH,"kyc_third_step_%s_%02d.png", type, index);
     }
 
     //endregion

@@ -42,12 +42,16 @@ import android.widget.TextView;
 
 import com.thalesgroup.kyc.idv.R;
 import com.thalesgroup.kyc.idv.helpers.DataContainer;
+import com.thalesgroup.kyc.idv.helpers.KYCManager;
 import com.thalesgroup.kyc.idv.helpers.communication.KYCCommunication;
 import com.thalesgroup.kyc.idv.helpers.communication.KYCFailedVerification;
 import com.thalesgroup.kyc.idv.helpers.communication.KYCResponse;
 import com.thalesgroup.kyc.idv.helpers.communication.KYCSession;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.FragmentManager;
+
+import java.util.List;
 
 /**
  * Overview {@Fragment} for submitting the scan results to the backend.
@@ -68,8 +72,14 @@ public class FragmentKycOverview extends AbstractFragmentBase {
     private TextView mTvResultValue;
     private ImageView mIvResultIcon;
 
+    private LinearLayout mLayoutCheckEPL;
+    private LinearLayout mLayoutCheckFace;
+
     private Button mButtonNext;
     private KYCCommunication mKYCCommunication;
+
+    private View mRetValue;
+    private int mRetryStep;
 
     //endregion
 
@@ -79,20 +89,23 @@ public class FragmentKycOverview extends AbstractFragmentBase {
     public View onCreateView(final LayoutInflater inflater,
                              final ViewGroup container,
                              final Bundle savedInstanceState) {
-        final View retValue = inflater.inflate(R.layout.fragment_kyc_overview, container, false);
+        mRetValue = inflater.inflate(R.layout.fragment_kyc_overview, container, false);
 
         // Find all UI components
-        mLayoutSelfie = retValue.findViewById(R.id.fragment_kyc_overview_layout_selfie);
-        mIvSelfie = retValue.findViewById(R.id.fragment_kyc_overview_iv_selfie);
-        mIvSelfieExtracted = retValue.findViewById(R.id.fragment_kyc_overview_iv_selfie_extracted);
-        final ImageView ivDocFront = retValue.findViewById(R.id.fragment_kyc_overview_iv_doc_front);
-        final ImageView ivDocBack = retValue.findViewById(R.id.fragment_kyc_overview_iv_doc_back);
-        mButtonNext = retValue.findViewById(R.id.fragment_kyc_overview_button_next);
-        mLayoutUserInfo = retValue.findViewById(R.id.fragment_kyc_overview_layout_user_info);
-        mTvResultHeader = retValue.findViewById(R.id.fragment_kyc_overview_tv_status);
-        mTvResultCaption = retValue.findViewById(R.id.fragment_kyc_overview_tv_user_info_caption);
-        mTvResultValue = retValue.findViewById(R.id.fragment_kyc_overview_tv_user_info_value);
-        mIvResultIcon = retValue.findViewById(R.id.fragment_kyc_overview_iv_progress);
+        mLayoutSelfie = mRetValue.findViewById(R.id.fragment_kyc_overview_layout_selfie);
+        mIvSelfie = mRetValue.findViewById(R.id.fragment_kyc_overview_iv_selfie);
+        mIvSelfieExtracted = mRetValue.findViewById(R.id.fragment_kyc_overview_iv_selfie_extracted);
+        final ImageView ivDocFront = mRetValue.findViewById(R.id.fragment_kyc_overview_iv_doc_front);
+        final ImageView ivDocBack = mRetValue.findViewById(R.id.fragment_kyc_overview_iv_doc_back);
+        mButtonNext = mRetValue.findViewById(R.id.fragment_kyc_overview_button_next);
+        mLayoutUserInfo = mRetValue.findViewById(R.id.fragment_kyc_overview_layout_user_info);
+        mTvResultHeader = mRetValue.findViewById(R.id.fragment_kyc_overview_tv_status);
+        mTvResultCaption = mRetValue.findViewById(R.id.fragment_kyc_overview_tv_user_info_caption);
+        mTvResultValue = mRetValue.findViewById(R.id.fragment_kyc_overview_tv_user_info_value);
+        mIvResultIcon = mRetValue.findViewById(R.id.fragment_kyc_overview_iv_progress);
+
+        mLayoutCheckEPL = mRetValue.findViewById(R.id.fragment_kyc_overview_layout_check_epl);
+        mLayoutCheckFace = mRetValue.findViewById(R.id.fragment_kyc_overview_layout_check_face);
 
         // Display current data.
         final byte[] selfie = DataContainer.instance().mSelfie;
@@ -106,12 +119,16 @@ public class FragmentKycOverview extends AbstractFragmentBase {
         // Hide bottom part with parsed data from server.
         mLayoutUserInfo.setVisibility(View.GONE);
 
+        // Hide Checks
+        mLayoutCheckEPL.setVisibility(View.GONE);
+        mLayoutCheckFace.setVisibility(View.GONE);
+
         // Update user interface.
         mButtonNext.setOnClickListener(view -> onButtonClickSubmit());
 
-        retValue.setFocusableInTouchMode(true);
-        retValue.requestFocus();
-        retValue.setOnKeyListener((view, keyCode, keyEvent) -> {
+        mRetValue.setFocusableInTouchMode(true);
+        mRetValue.requestFocus();
+        mRetValue.setOnKeyListener((view, keyCode, keyEvent) -> {
             if (keyCode == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_UP ) {
                 getMainActivity().progressBarHide();
                 if (mKYCCommunication != null) {
@@ -122,7 +139,7 @@ public class FragmentKycOverview extends AbstractFragmentBase {
             return false;
         });
 
-        return retValue;
+        return mRetValue;
     }
 
     //endregion
@@ -164,8 +181,8 @@ public class FragmentKycOverview extends AbstractFragmentBase {
                                     final String caption,
                                     final String value) {
         if (value != null && !"null".equals(value) && !value.isEmpty()) {
-            retCaption.append(caption).append(": \n");
-            retValue.append(value).append('\n');
+            retCaption.append("\n").append(caption).append(":");
+            retValue.append("\n").append(value);
         }
     }
 
@@ -181,8 +198,8 @@ public class FragmentKycOverview extends AbstractFragmentBase {
                                  final StringBuilder retValue,
                                  final String caption,
                                  final int value) {
-        retCaption.append(caption).append(": \n");
-        retValue.append(value).append('\n');
+        retCaption.append("\n").append(caption).append(":");
+        retValue.append("\n").append(value);
     }
 
     /**
@@ -191,23 +208,57 @@ public class FragmentKycOverview extends AbstractFragmentBase {
      * @param result Result.
      */
     private void displayResult(final KYCResponse result) {
+        mRetryStep = KYCSession.RETRY_NONE;
+
         // Make sure that response is valid and positive.
         if (result == null || result.getDocument() == null) {
-            displayError("Failed to get valid response from server.", null);
+            displayError("Failed to get valid response from server.", null, KYCSession.RETRY_NONE);
             return;
-        } else if (!result.getDocument().getResult().equalsIgnoreCase("SUCCESS")) {
-            displayError(result.getMessageReadable(), result);
+        } else if (  (!result.getDocument().getResult().equalsIgnoreCase("SUCCESS"))
+                   &&(!result.getDocument().getResult().equalsIgnoreCase("NoFailedChecks"))
+                   &&(!result.getDocument().getResult().equalsIgnoreCase("DocumentExpired"))
+                   &&(!result.getDocument().getResult().equalsIgnoreCase("Document_Expired"))
+                   &&(!result.getDocument().getResult().equalsIgnoreCase("MRZCheckFailed"))
+                   &&(!result.getDocument().getResult().equalsIgnoreCase("SecurityCheckFailed"))
+                   &&(!result.getDocument().getResult().equalsIgnoreCase("VIZCrosscheckFailed"))
+                   &&(!result.getDocument().getResult().equalsIgnoreCase("NoFailedSubsetOfChecks"))
+                 )
+       {
+            displayError(result.getDocument().getResult(), result, KYCSession.RETRY_ABORT);
             return;
         }
 
         // Build user information strings.
         final StringBuilder caption = new StringBuilder();
         final StringBuilder value = new StringBuilder();
+        String firstName = "";
+        String lastName = "";
 
-        if (result.getDocument().getFirstName() != null && result.getDocument().getSurname() != null) {
-            caption.append(getString(R.string.kyc_result_name_surname)).append('\n');
-            value.append(result.getDocument().getFirstName()).append(' ').append(result.getDocument().getSurname()).append('\n');
+        // Name available in MRZ?
+        if (result.getDocument().getMRZ() != null) {
+            firstName = result.getDocument().getMRZ().getFirstName();
+            lastName = result.getDocument().getMRZ().getLastName();
         }
+
+        // Default name if not in MRZ
+        if (firstName.equals("")) {
+            firstName = result.getDocument().getFirstName();
+        }
+        if (lastName.equals("")) {
+            lastName = result.getDocument().getSurname();
+        }
+
+        if (!firstName.equals("") && !lastName.equals("")) {
+            caption.append(getString(R.string.kyc_result_name_surname)).append('\n');
+            if (firstName.length() >= 16) {
+                caption.append('\n');
+            }
+            if (lastName.length() >= 16) {
+                caption.append('\n');
+            }
+            value.append(firstName).append(' ').append(lastName).append('\n');
+        }
+
         appendResultString(caption, value, getString(R.string.kyc_result_gender), result.getDocument().getGender());
         appendResultString(caption, value, getString(R.string.kyc_result_nationality), result.getDocument().getNationality());
         appendResultString(caption, value, getString(R.string.kyc_result_expiry_date), result.getDocument().getExpiryDate());
@@ -215,6 +266,12 @@ public class FragmentKycOverview extends AbstractFragmentBase {
         appendResultString(caption, value, getString(R.string.kyc_result_doc_number), result.getDocument().getDocumentNumber());
         appendResultString(caption, value, getString(R.string.kyc_result_doc_type), result.getDocument().getDocumentType());
         appendResultInt(caption, value, getString(R.string.kyc_result_verification_count), result.getDocument().getTotalVerificationsDone());
+        appendResultInt(caption, value, getString(R.string.fragment_kyc_alerts), result.getDocument().getFailedVerifications() != null ? result.getDocument().getFailedVerifications().size() : 0);
+
+        // Enhanced Passive Liveness Result?
+        if (result.getEnhancedLiveness() != null) {
+            appendResultInt(caption, value, getString(R.string.kyc_result_liveness_score), result.getEnhancedLiveness().getScore());
+        }
 
         // Show / Hide whole section
         mLayoutUserInfo.setVisibility(caption.length() > 0 ? View.VISIBLE : View.GONE);
@@ -237,8 +294,58 @@ public class FragmentKycOverview extends AbstractFragmentBase {
         }
 
         // Update status header + icon.
-        mTvResultHeader.setText(result.getMessageReadable());
-        mIvResultIcon.setImageDrawable(getResources().getDrawable(R.drawable.passed));
+        String docRes = getString(R.string.fragment_kyc_doc_status) + " " + result.getDocument().getResult();
+        mTvResultHeader.setText(docRes);
+        mIvResultIcon.setVisibility(View.GONE);
+
+        // -------------
+        // Update checks
+        // -------------
+
+
+        if (KYCManager.getInstance().isFacialRecognition()) {
+            if (KYCManager.getInstance().getFaceLivenessMode().equals(KYCManager.LIVENESS_ENHANCED)) {
+                mLayoutCheckEPL.setVisibility(View.VISIBLE);
+                if (result.getEnhancedLiveness().getScore() < 80) {
+                    ((ImageView)mRetValue.findViewById(R.id.fragment_kyc_overview_icon_check_epl)).setImageResource(R.drawable.error);
+                }
+            }
+
+            mLayoutCheckFace.setVisibility(View.VISIBLE);
+            if (result.getFace().getResult().equals("FACE_NOT_MATCH")) {
+                ((ImageView)mRetValue.findViewById(R.id.fragment_kyc_overview_icon_check_face)).setImageResource(R.drawable.error);
+            }
+        }
+
+        // Alerts
+        mLayoutUserInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (  (result.getDocument().getFailedVerifications() != null)
+                    &&(result.getDocument().getFailedVerifications().size() > 0)
+                   ){
+                    String alertNb = getString(R.string.fragment_kyc_alerts);
+                    String alerts = "";
+                    List<KYCFailedVerification> kycAlerts = result.getDocument().getFailedVerifications();
+
+                    alertNb += ": " + result.getDocument().getFailedVerifications().size();
+
+
+                    for (int i = 0; i < result.getDocument().getFailedVerifications().size(); i++) {
+                        KYCFailedVerification alert = kycAlerts.get(i);
+
+                        alerts += "\n" + alert.getName();
+                    }
+
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                    builder.setTitle(alertNb);
+                    builder.setIcon(R.drawable.error);
+                    builder.setMessage(alerts);
+                    builder.setPositiveButton("Ok", null);
+                    builder.show();
+                }
+            }
+        });
 
         // Update button function
         mButtonNext.setText(R.string.fragment_kyc_overview_button_done);
@@ -250,7 +357,7 @@ public class FragmentKycOverview extends AbstractFragmentBase {
      *
      * @param error Error.
      */
-    private void displayError(final String error, final KYCResponse response) {
+    private void displayError(final String error, final KYCResponse response, int retryStep) {
         // Append detail information about failed check if available.
         final StringBuilder fullErr = new StringBuilder(error);
         if (response != null && !response.getDocument().getFailedVerifications().isEmpty()) {
@@ -263,6 +370,17 @@ public class FragmentKycOverview extends AbstractFragmentBase {
 
         mTvResultHeader.setText(fullErr);
         mIvResultIcon.setImageDrawable(getResources().getDrawable(R.drawable.error));
+
+        mRetryStep = retryStep;
+
+        if ((mRetryStep == KYCSession.RETRY_DOC_SCAN) || (mRetryStep == KYCSession.RETRY_SELFIE_SCAN)) {
+            mButtonNext.setText(getString(R.string.button_retry));
+            mButtonNext.setOnClickListener(view -> onButtonClickRetry());
+        }
+        else if (mRetryStep == KYCSession.RETRY_ABORT) {
+            mButtonNext.setText(getString(R.string.button_abort));
+            mButtonNext.setOnClickListener(view -> onButtonClickAbort());
+        }
     }
 
     //endregion
@@ -276,13 +394,12 @@ public class FragmentKycOverview extends AbstractFragmentBase {
     private void onButtonClickSubmit() {
         // Show loading progress bar during asynchronous operation.
         getMainActivity().progressBarShow();
+        mIvResultIcon.setVisibility(View.VISIBLE);
 
         // Send data to server and wait for response.
-        mKYCCommunication = new KYCCommunication();
-        mKYCCommunication.verifyDocument(DataContainer.instance().mDocFront,
-                                         DataContainer.instance().mDocBack,
-                                         DataContainer.instance().mSelfie,
-                                         new KYCSession.KYCResponseHandler() {
+        mKYCCommunication = DataContainer.instance().mKYCCommunication;
+
+        mKYCCommunication.verifyDocument(new KYCSession.KYCResponseHandler() {
                                              @Override
                                              public void onSuccess(final KYCResponse response) {
                                                  // Operation finished. We can hide progress bar.
@@ -296,9 +413,25 @@ public class FragmentKycOverview extends AbstractFragmentBase {
                                                  // Operation finished. We can hide progress bar.
                                                  getMainActivity().progressBarHide();
                                                  // Display issue description.
-                                                 displayError(error, null);
+                                                 displayError(error, null, KYCSession.RETRY_NONE);
                                              }
-                                         });
+
+                                             @Override
+                                             public void onFailureRetry(final String error, int retryStep) {
+                                                 // Operation finished. We can hide progress bar.
+                                                 getMainActivity().progressBarHide();
+                                                 // Display issue description.
+                                                 displayError(error + "\n" + getString(R.string.try_again), null, retryStep);
+                                             }
+
+                                             @Override
+                                             public void onFailureAbort(final String error) {
+                                                 // Operation finished. We can hide progress bar.
+                                                 getMainActivity().progressBarHide();
+                                                 // Display issue description.
+                                                 displayError(error, null, KYCSession.RETRY_ABORT);
+                                             }
+                                         }, DataContainer.instance().mVerificationStep);
     }
 
     /**
@@ -306,6 +439,34 @@ public class FragmentKycOverview extends AbstractFragmentBase {
      */
     private void onButtonClickDone() {
         // Close all fragments
+        getMainActivity().getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+    }
+
+    /**
+     * On click listener for the retry button.
+     */
+    private void onButtonClickRetry() {
+        if (mRetryStep == KYCSession.RETRY_SELFIE_SCAN) {
+            DataContainer.instance().mVerificationStep = KYCCommunication.STEP_SELFIE_VERIFICATION;
+            getMainActivity().getSupportFragmentManager().popBackStack();
+
+            return;
+        }
+        else if (mRetryStep == KYCSession.RETRY_DOC_SCAN) {
+            DataContainer.instance().mVerificationStep = KYCCommunication.STEP_START_VERIFICATION;
+            getMainActivity().getSupportFragmentManager().popBackStack();
+            getMainActivity().getSupportFragmentManager().popBackStack();
+            getMainActivity().getSupportFragmentManager().popBackStack();
+
+            return;
+        }
+    }
+
+    /**
+     * On click listener for the abort button.
+     */
+    private void onButtonClickAbort() {
+        DataContainer.instance().mVerificationStep = KYCCommunication.STEP_START_VERIFICATION;
         getMainActivity().getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
 

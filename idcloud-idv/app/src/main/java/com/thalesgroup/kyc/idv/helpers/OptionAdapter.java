@@ -219,9 +219,6 @@ public class OptionAdapter extends BaseAdapter {
     public boolean isEnabled(final int position) {
         final AbstractOption.OptionSection section = mNavItems.get(position).getSection();
         boolean retValue = super.isEnabled(position);
-        if (section == AbstractOption.OptionSection.FaceCapture) {
-            retValue &= KYCManager.getInstance().isFacialRecognition();
-        }
 
         return retValue;
     }
@@ -271,9 +268,9 @@ public class OptionAdapter extends BaseAdapter {
         // Remove listener before changing value to prevent change on older item.
         switchValue.setEnabled(enabled);
         switchValue.setOnCheckedChangeListener(null);
-        switchValue.setChecked(option.getValue(mContext));
+        switchValue.setChecked(option.getValue());
         switchValue.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (!option.setValue(switchValue.isChecked(), mContext)) {
+            if (!option.setValue(switchValue.isChecked())) {
                 switchValue.setChecked(!isChecked);
             } else {
                 this.notifyDataSetChanged();

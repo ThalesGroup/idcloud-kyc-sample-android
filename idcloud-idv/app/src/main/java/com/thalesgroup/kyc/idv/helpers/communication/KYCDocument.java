@@ -58,6 +58,7 @@ public class KYCDocument {
     private final List<KYCFailedVerification> mFailedVerifications;
     private final String mNationality;
     private final int mTotalVerificationsDone;
+    private KYCMRZ mMRZ = null;
 
     //endregion
 
@@ -71,17 +72,21 @@ public class KYCDocument {
      * @throws JSONException If value not found in passed response.
      */
     KYCDocument(@NonNull final JSONObject response) throws JSONException {
-        mFirstName = JsonUtil.jsonGetString(response, "firstName", null);
-        mBirthDate = JsonUtil.jsonGetString(response,"birthDate", null);
-        mExpiryDate = JsonUtil.jsonGetString(response,"expiryDate", null);
-        mDocumentType = JsonUtil.jsonGetString(response,"documentType", null);
-        mSurname = JsonUtil.jsonGetString(response,"surname", null);
+        mFirstName = JsonUtil.jsonGetString(response, "firstName", "");
+        mBirthDate = JsonUtil.jsonGetString(response,"birthDate", "");
+        mExpiryDate = JsonUtil.jsonGetString(response,"expiryDate", "");
+        mDocumentType = JsonUtil.jsonGetString(response,"documentType", "");
+        mSurname = JsonUtil.jsonGetString(response,"surname", "");
         mPortrait = ImageUtil.imageFromBase64(JsonUtil.jsonGetString(response, "portrait", null));
-        mResult = JsonUtil.jsonGetString(response,"result", null);
-        mGender = JsonUtil.jsonGetString(response,"gender", null);
-        mDocumentNumber = JsonUtil.jsonGetString(response,"documentNumber", null);
-        mNationality = JsonUtil.jsonGetString(response,"nationality", null);
+        mResult = JsonUtil.jsonGetString(response,"result", "");
+        mGender = JsonUtil.jsonGetString(response,"gender", "");
+        mDocumentNumber = JsonUtil.jsonGetString(response,"documentNumber", "");
+        mNationality = JsonUtil.jsonGetString(response,"nationality", "");
         mTotalVerificationsDone = JsonUtil.jsonGetInt(response,"totalVerifications", 0);
+
+        if (response.has("mrzTextFields")) {
+            mMRZ = new KYCMRZ(response.getJSONObject("mrzTextFields"));
+        }
 
         mFailedVerifications = new ArrayList<>();
         if (response.has("failedVerifications")) {
@@ -204,6 +209,15 @@ public class KYCDocument {
      */
     public int getTotalVerificationsDone() {
         return mTotalVerificationsDone;
+    }
+
+    /**
+     * Gets MRZ.
+     *
+     * @return MRZ.
+     */
+    public KYCMRZ getMRZ() {
+        return mMRZ;
     }
 
     //endregion

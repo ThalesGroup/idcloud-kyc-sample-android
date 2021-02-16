@@ -49,6 +49,7 @@ public class KYCResponse implements Serializable {
     private final int mCode;
     private KYCDocument mDocument = null;
     private KYCFace mFace = null;
+    private KYCEnhancedLiveness mEnhancedLiveness = null;
 
     //endregion
 
@@ -63,8 +64,8 @@ public class KYCResponse implements Serializable {
      */
     KYCResponse(@NonNull final JSONObject response) throws JSONException {
         mCode = JsonUtil.jsonGetInt(response, "code", -1);
-        mMessage = JsonUtil.jsonGetString(response,"message", null);
-        mType =  JsonUtil.jsonGetString(response, "type", null);
+        mMessage = JsonUtil.jsonGetString(response,"message", "Unknown");
+        mType =  JsonUtil.jsonGetString(response, "type", "Unknown");
 
         // All objects are optional, we might not get them from server.
         if (response.has("object")) {
@@ -74,6 +75,9 @@ public class KYCResponse implements Serializable {
             }
             if (object.has("face")) {
                 mFace = new KYCFace(object.getJSONObject("face"));
+            }
+            if (object.has("enhancedLiveness")) {
+                mEnhancedLiveness = new KYCEnhancedLiveness(object.getJSONObject("enhancedLiveness"));
             }
         }
     }
@@ -145,6 +149,15 @@ public class KYCResponse implements Serializable {
      */
     public KYCFace getFace() {
         return mFace;
+    }
+
+    /**
+     * Gets the {@code KYCEnhancedLiveness}.
+     *
+     * @return {@code KYCEnhancedLiveness}.
+     */
+    public KYCEnhancedLiveness getEnhancedLiveness() {
+        return mEnhancedLiveness;
     }
 
     //endregion

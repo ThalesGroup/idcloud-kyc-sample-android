@@ -33,7 +33,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/dimensionMarginNormal"
-        android:layout_gravity="start"
+        android:layout_gravity="center"
         android:gravity="start"
         android:textSize="@dimen/dimensionTextSizeHeader"
         android:textColor="@color/colorTextPrimary"

@@ -6,8 +6,8 @@ android {
         applicationId "com.thalesgroup.kyc.idv"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 321008
-        versionName "3.2.1-008"
+        versionCode 321009
+        versionName "3.2.1-009"
         testInstrumentationRunner "androidx.move_in_from_left.runner.AndroidJUnitRunner"
         ndkVersion '16.1.4479499'
     }

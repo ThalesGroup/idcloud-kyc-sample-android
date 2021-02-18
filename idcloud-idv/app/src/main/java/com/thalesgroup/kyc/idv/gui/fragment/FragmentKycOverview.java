@@ -214,15 +214,28 @@ public class FragmentKycOverview extends AbstractFragmentBase {
         if (result == null || result.getDocument() == null) {
             displayError("Failed to get valid response from server.", null, KYCSession.RETRY_NONE);
             return;
-        } else if (  (!result.getDocument().getResult().equalsIgnoreCase("SUCCESS"))
-                   &&(!result.getDocument().getResult().equalsIgnoreCase("NoFailedChecks"))
-                   &&(!result.getDocument().getResult().equalsIgnoreCase("DocumentExpired"))
-                   &&(!result.getDocument().getResult().equalsIgnoreCase("Document_Expired"))
-                   &&(!result.getDocument().getResult().equalsIgnoreCase("MRZCheckFailed"))
-                   &&(!result.getDocument().getResult().equalsIgnoreCase("SecurityCheckFailed"))
-                   &&(!result.getDocument().getResult().equalsIgnoreCase("VIZCrosscheckFailed"))
-                   &&(!result.getDocument().getResult().equalsIgnoreCase("NoFailedSubsetOfChecks"))
-                 )
+        } else if (
+            // DV status
+                (!result.getDocument().getResult().equalsIgnoreCase("SUCCESS"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("DATA_INTEGRITY_ISSUE"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("SECURITY_ISSUE"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("DOCUMENT_EXPIRED"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("QA_NOT_PASSED"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("QA_PASSED"))
+
+                        // DV+FV+EL status
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("NoFailedChecks"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("DocumentExpired"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("MRZCheckFailed"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("SecurityCheckFailed"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("VIZCrosscheckFailed"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("NoFailedSubsetOfChecks"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("DocumentPageMissing"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("SpecimenDetected"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("QA_OK"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("QA_KO"))
+                        &&(!result.getDocument().getResult().equalsIgnoreCase("QA_NOT_DONE"))
+        )
        {
             displayError(result.getDocument().getResult(), result, KYCSession.RETRY_ABORT);
             return;

@@ -139,7 +139,7 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
 
                 new AbstractOption.Version(AbstractOption.OptionSection.Version,
                         mContext.getString(R.string.STRING_KYC_OPTION_VERSION_LIVENESS),
-                        "2.8.0"),
+                        "2.9.0"),
 
                 new AbstractOption.Version(AbstractOption.OptionSection.Version,
                         mContext.getString(R.string.STRING_JSON_KYC2_USER_ACCOUNT),

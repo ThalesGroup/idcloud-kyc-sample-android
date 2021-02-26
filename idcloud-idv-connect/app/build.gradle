@@ -48,15 +48,14 @@ dependencies {
     implementation 'me.dm7.barcodescanner:zxing:1.9.8'
 
     // Acuant
-    implementation 'com.acuant:acuantcommon:11.4.9'
-    implementation 'com.acuant:acuantcamera:11.4.9'
-    implementation 'com.acuant:acuantimagepreparation:11.4.9@aar'
-    implementation 'com.acuant:acuantdocumentprocessing:11.4.9'
-    implementation 'com.acuant:acuantechipreader:11.4.9'
-    implementation 'com.acuant:acuantfacematch:11.4.9'
-    implementation 'com.acuant:acuanthgliveness:11.4.9'
-    implementation 'com.acuant:acuantfacecapture:11.4.9'
-    implementation 'com.acuant:acuantpassiveliveness:11.4.9'
+    implementation 'com.acuant:acuantcommon:11.4.10'
+    implementation 'com.acuant:acuantcamera:11.4.10'
+    implementation 'com.acuant:acuantimagepreparation:11.4.10@aar'
+    implementation 'com.acuant:acuantdocumentprocessing:11.4.10'
+    implementation 'com.acuant:acuantfacematch:11.4.10'
+    implementation 'com.acuant:acuanthgliveness:11.4.10'
+    implementation 'com.acuant:acuantfacecapture:11.4.10'
+    implementation 'com.acuant:acuantpassiveliveness:11.4.10'
 
     // JWTDecode
     implementation 'com.auth0.android:jwtdecode:1.4.0'

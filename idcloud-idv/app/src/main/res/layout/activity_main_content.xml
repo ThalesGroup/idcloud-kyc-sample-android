@@ -62,11 +62,20 @@
         android:orientation="vertical"
         android:gravity="center"
         android:visibility="invisible">
-        <ProgressBar
-            android:id="@+id/activity_main_progressbar"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            style="?android:attr/progressBarStyle"/>
+            android:background="@drawable/background_stroke_radius"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="visible">
+            <ProgressBar
+                android:id="@+id/activity_main_progressbar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                style="?android:attr/progressBarStyle"/>
+        </LinearLayout>
     </LinearLayout>
 
 </RelativeLayout>

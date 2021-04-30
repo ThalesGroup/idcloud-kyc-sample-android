@@ -29,21 +29,75 @@
     <string name="fragment_home_button_scan">Scan QR Code</string>
     <string name="fragment_home_button_enroll">Onboard</string>
 
-    <string name="fragment_first_step_caption">MyBank ID Verification</string>
-    <string name="fragment_first_step_description">• Enroll easily using automatic data extraction and form filling.\n• Authenticate with face verification service.</string>
-    <string name="fragment_first_step_button_next">Let\'s go!</string>
+    <string name="fragment_onboarding_steps_caption">MyBank ID Verification</string>
+    <string name="fragment_onboarding_steps_description">• Enroll easily using automatic data extraction and form filling.\n• Authenticate with face verification service.</string>
+    <string name="fragment_onboarding_steps_button_next">Let\'s go!</string>
 
-    <string name="fragment_second_step_caption">Document Type Selection</string>
-    <string name="fragment_second_step_button_id_card">ID Card</string>
-    <string name="fragment_second_step_button_passport">Passport</string>
-
-    <string name="fragment_id_card_button_next">Next</string>
+    <string name="fragment_doc_type_caption">Document Type Selection</string>
+    <string name="fragment_doc_type_button_id_card">ID Card</string>
+    <string name="fragment_doc_type_button_passport">Passport</string>
 
     <string name="fragment_face_id_tutorial_caption">Selfie Capture</string>
     <string name="fragment_face_id_tutorial_description">Please make sure you follow these instructions when taking the selfie picture:\n\nThe picture must be taken in conditions identical to the ID one (no glasses, no hat, no smiling).</string>
     <string name="fragment_face_id_tutorial_button_next">Take selfie</string>
 
+    <string name="button_next">Next</string>
     <string name="result_success">Is the image clear and the text readable?\nIs the capture well cropped?</string>
+
+    <!--New UI-->
+    <string name="fragment_onboarding_caption">MyBank Onboarding</string>
+    <string name="fragment_onboarding_doc_type">Document Type</string>
+    <string name="fragment_onboarding_doc_id">ID Card</string>
+    <string name="fragment_onboarding_doc_passport">Passport</string>
+    <string name="fragment_onboarding_face_verif">Face Verification</string>
+    <string name="fragment_onboarding_face_verif_yes">Yes</string>
+    <string name="fragment_onboarding_face_verif_no">No</string>
+    <string name="fragment_onboarding_button_next">Go</string>
+
+    <string name="fragment_doc_chip_caption">Electronic Document</string>
+    <string name="fragment_doc_chip_description">Do you have an electronic document?</string>
+    <string name="fragment_doc_chip_button_yes">Yes</string>
+    <string name="fragment_doc_chip_button_no">No</string>
+
+    <string name="fragment_doc_mrz_caption">Scan Document MRZ</string>
+    <string name="fragment_doc_mrz_description">Proceed as follows to scan document MRZ.</string>
+    <string name="fragment_doc_mrz_button_next">Scan MRZ</string>
+
+    <string name="fragment_res_mrz_caption">MRZ data</string>
+    <string name="fragment_res_mrz_description">MRZ collected information.</string>
+    <string name="fragment_res_mrz_button_next">Next</string>
+    <string name="fragment_res_mrz_doc">"Document number: "</string>
+    <string name="fragment_res_mrz_dob">"Date of birth: "</string>
+    <string name="fragment_res_mrz_doe">"Date of expiry: "</string>
+
+    <string name="fragment_nfc_prepare_caption">Prepare your document &amp; Phone</string>
+    <string name="fragment_nfc_prepare_description">Remove any cover from your document and phone.</string>
+    <string name="fragment_nfc_prepare_button_next">Next</string>
+
+    <string name="fragment_nfc_instructions_caption">Scan Instructions</string>
+    <string name="fragment_nfc_instructions_description">Use your phone to scan your document.</string>
+    <string name="fragment_nfc_instructions_button_next">Start scanning</string>
+
+    <string name="fragment_nfc_instructions_enable_nfc_message">NFC is not enabled, please enable it.</string>
+    <string name="fragment_nfc_instructions_enable_nfc_button">Enable NFC</string>
+
+    <string name="fragment_nfc_scan_caption">Scan your document</string>
+    <string name="fragment_nfc_scan_description_wait">Establishing connection.</string>
+    <string name="fragment_nfc_scan_description_read">Reading document…</string>
+    <string name="fragment_nfc_scan_description_error">Error reading document.</string>
+    <string name="fragment_nfc_scan_description_step">"Read data group: "</string>
+    <string name="fragment_nfc_scan_button_cancel">Cancel</string>
+    <string name="fragment_nfc_scan_button_next">Verify document</string>
+    <string name="fragment_nfc_scan_reading">Please do not move the phone or document once reading as started.</string>
+    <string name="fragment_nfc_scan_slide">Please try sliding your phone over your document. It will help finding the best position to read the document.</string>
+    <string name="fragment_nfc_scan_photo_page">Some passports are easier to scan from the photo page.</string>
+    <string name="fragment_nfc_scan_back_page">Some passports are easier to scan from the back page.</string>
+    <string name="fragment_nfc_scan_back_cover">Some passports are easier to scan from the back cover.</string>
+    <string name="fragment_nfc_scan_front_page">Some passports are easier to scan from the front page.</string>
+    <string name="fragment_nfc_scan_ok">Document read successfully.</string>
+    <string name="fragment_nfc_scan_ko">Document read error.</string>
+    <string name="fragment_nfc_scan_canceled">Operation canceled.</string>
+    <string name="fragment_nfc_scan_no_chip">Unable to detect document chip.\nMaybe your document chip is mute or it\'s not an electronic document.</string>
 
     <!--Missing permissions-->
     <string name="ui_label_permissions_caption">Missing permission</string>
@@ -53,25 +107,34 @@
     <string name="ui_missing_camera_permissions">Missing camera permissions.</string>
 
     <!--KYC-->
-    <string name="STRING_KYC_FIRST_STEP_ID">Capture your ID card or Passport.</string>
-    <string name="STRING_KYC_FIRST_STEP_FACE">Take a selfie for facial check.</string>
-    <string name="STRING_KYC_FIRST_STEP_REVIEW">Review and submit your information.</string>
+    <string name="STRING_KYC_ONBOARDING_STEPS_ID">Capture your ID card or Passport.</string>
+    <string name="STRING_KYC_ONBOARDING_STEPS_MRZ">Capture MRZ of your ID card or Passport.</string>
+    <string name="STRING_KYC_ONBOARDING_STEPS_NFC">Read chip of your ID card or Passport.</string>
+    <string name="STRING_KYC_ONBOARDING_STEPS_FACE">Take a selfie for facial verification.</string>
+    <string name="STRING_KYC_ONBOARDING_STEPS_REVIEW">Review and submit your information.</string>
 
     <!--KYC OVERVIEW SCREEN-->
     <string name="fragment_kyc_overview_button_done">Done</string>
     <string name="fragment_kyc_overview_caption">User enrollment</string>
-    <string name="fragment_kyc_overview_check_document">Please check your above document\n before submitting for verification.</string>
+    <string name="fragment_kyc_overview_send_document">Please wait.\nThe backend is verifying your document.</string>
+    <string name="fragment_kyc_overview_verif_doc">"IdCloud is verifying your document: "</string>
+    <string name="fragment_kyc_overview_verif_face">"IdCloud is verifying your selfie: "</string>
+    <string name="fragment_kyc_overview_verif_pending">"pending"</string>
+    <string name="fragment_kyc_overview_verif_ongoing">"ongoing"</string>
+    <string name="fragment_kyc_overview_verif_done">"done"</string>
     <string name="fragment_kyc_doc_status">Document status:</string>
     <string name="fragment_kyc_check_epl">Enhanced passive liveness:</string>
     <string name="fragment_kyc_check_al">Active liveness:</string>
     <string name="fragment_kyc_check_face">Face verification:</string>
     <string name="fragment_kyc_check_doc">Document verification:</string>
-    <string name="placeholder_doc_extraction">Name: \nSurname: \nBirth date: \nCountry: \nDocument type: \nDocument number: \nGender: \nExpiry date: \n</string>
+    <string name="fragment_kyc_nfc_status">Electronic chip status:</string>
     <string name="button_enrollment_verify">SUBMIT</string>
-    <string name="button_retry">RETRY</string>
-    <string name="button_abort">ABORT</string>
+    <string name="button_retry">Retry</string>
+    <string name="button_abort">Abort</string>
+    <string name="button_new_doc">Start Over</string>
 
     <string name="kyc_result_name_surname">"Name, surname: </string>
+    <string name="kyc_result_name">"Name</string>
     <string name="kyc_result_birth_date">"Birth date</string>
     <string name="kyc_result_gender">"Gender</string>
     <string name="kyc_result_doc_type">"Document type</string>
@@ -94,16 +157,26 @@
     <string name="kyc_doc_scan_step_02">2: Turn\nDoc over:</string>
     <string name="kyc_doc_scan_step_03">3: Scan\nBack doc:</string>
 
+    <string name="kyc_mrz_scan">Scan\nDocument MRZ:</string>
+
     <!-- Options-->
+    <string name="STRING_KYC_OPTION_SECTION_UI">UI Settings</string>
+    <string name="STRING_KYC_OPTION_NEW_UI_CAP">New UI mode</string>
+    <string name="STRING_KYC_OPTION_NEW_UI_DES">Use new UI instead of legacy UI.</string>
     <string name="STRING_KYC_OPTION_SECTION_GENERAL">General Settings</string>
-    <string name="STRING_KYC_OPTION_WEB_TOKEN">Scan QR Code</string>
+    <string name="STRING_KYC_OPTION_NFC_CAP">Electronic chip capture mode</string>
+    <string name="STRING_KYC_OPTION_NFC_DES">Read MRZ and Electronic chip of document instead of document OCR scan.</string>
     <string name="STRING_KYC_OPTION_FACE_REC_CAP">Face verification + enhanced liveness check</string>
     <string name="STRING_KYC_OPTION_FACE_REC_DES">Take a selfie after the ID capture. The liveness check and facial verification are done on the server side.</string>
 
 
     <string name="STRING_KYC_OPTION_SECTION_SCAN">Document Scan</string>
+    <string name="STRING_KYC_OPTION_SMART_MODE_CAP">Smart mode</string>
+    <string name="STRING_KYC_OPTION_SMART_MODE_DES">Smart mode for document scan configuration.</string>
     <string name="STRING_KYC_OPTION_MANUAL_MODE_CAP">Manual capture</string>
     <string name="STRING_KYC_OPTION_MANUAL_MODE_DES">Set Manual/Automatic capture mode for document scan.</string>
+    <string name="STRING_KYC_OPTION_PORTRAIT_MODE_CAP">Portrait mode</string>
+    <string name="STRING_KYC_OPTION_PORTRAIT_MODE_DES">Set portrait mode for document scan.</string>
 
     <string name="STRING_KYC_OPTION_SECTION_SCAN_CONFIG">Document Scan Configuration</string>
     <string name="STRING_KYC_OPTION_EDGE_MODE_CAP">Edge mode</string>
@@ -119,18 +192,39 @@
     <string name="STRING_KYC_OPTION_ENABLE_BW_CHECK_CAP">BW photocopy</string>
     <string name="STRING_KYC_OPTION_ENABLE_BW_CHECK_DES">Enable black &amp; white photocopy quality check.</string>
 
+    <string name="STRING_KYC_OPTION_SECTION_NFC">Document Chip</string>
+    <string name="STRING_KYC_OPTION_SKIP_MRZ_CAP">Skip MRZ scan</string>
+    <string name="STRING_KYC_OPTION_SKIP_MRZ_DES">Skip MRZ data scan and re-use last scanned data if available.</string>
+    <string name="STRING_KYC_OPTION_MRZ_AREA_CAP">Display MRZ area</string>
+    <string name="STRING_KYC_OPTION_MRZ_AREA_DES">Display a rectangle around MRZ when detected</string>
+    <string name="STRING_KYC_OPTION_MRZ_DATA_CAP">Display MRZ data</string>
+    <string name="STRING_KYC_OPTION_MRZ_DATA_DES">Display MRZ data when detected</string>
+    <string name="STRING_KYC_OPTION_NFC_SOUND_CAP">NFC sound</string>
+    <string name="STRING_KYC_OPTION_NFC_SOUND_DES">Play sound when connecting or disconnecting from document chip</string>
+
     <string name="STRING_KYC_OPTION_SECTION_VERSION">Versions</string>
-    <string name="STRING_KYC_OPTION_VERSION_APP">Application</string>
-    <string name="STRING_KYC_OPTION_VERSION_DOC_SDK">Document SDK</string>
-    <string name="STRING_KYC_OPTION_VERSION_LIVENESS">Enhanced Passive Liveness SDK</string>
+    <string name="STRING_KYC_OPTION_VERSION_APP">Application version</string>
+    <string name="STRING_KYC_OPTION_VERSION_DOC_SDK">Document SDK version</string>
+    <string name="STRING_KYC_OPTION_VERSION_MRZ_SDK">MRZ SDK version</string>
+    <string name="STRING_KYC_OPTION_VERSION_NFC_SDK">NFC SDK version</string>
+    <string name="STRING_KYC_OPTION_VERSION_LIVENESS">Face SDK version</string>
+    <string name="STRING_KYC_OPTION_WEB_TOKEN">Scan QR Code</string>
     <string name="STRING_KYC_OPTION_PRIVACY_POLICY">Privacy Policy</string>
 
     <!--KYC Document Scan-->
     <string name="STRING_KYC_DOC_SCAN_CAPTION_IDCARD">Document Capture:\nID Card</string>
     <string name="STRING_KYC_DOC_SCAN_CAPTION_PASSPORT">Document Capture:\nPassport</string>
 
+    <string name="STRING_KYC_MRZ_SCAN_CAPTION_IDCARD">Document MRZ Capture:\nID Card</string>
+    <string name="STRING_KYC_MRZ_SCAN_CAPTION_PASSPORT">Document MRZ Capture:\nPassport</string>
+
     <string name="STRING_KYC_DOC_SCAN_01">Please make sure you follow these instructions when taking the picture of the document:\n\n• Choose a contrasting background.\n• Lie the document in a flat position, take the picture in landscape mode.\n• Use the blue rectangle to help you align your picture.</string>
     <string name="STRING_KYC_DOC_SCAN_02">• Avoid light hotspot, wait for automatic detection and follow live instructions.\n• In case of manual capture, press shutter icon to take the picture.</string>
+
+    <string name="STRING_KYC_MRZ_SCAN_01">Please make sure you follow these instructions when taking the picture of the document:\n\n• Choose a contrasting background.\n• Lie the document in a flat position, take the picture in landscape mode.\n• Use the blue rectangle to help you align your picture.</string>
+    <string name="STRING_KYC_MRZ_SCAN_02">• Avoid light hotspot, wait for automatic detection and follow live instructions.\n• In case of manual capture, press shutter icon to take the picture.</string>
+
+    <string name="STRING_KYC_SMART_LEVEL">"Smart Level: "</string>
 
     <!-- Terms and Conditions -->
     <string name="legal_privacy_policy">Privacy Policy</string>
@@ -145,7 +239,6 @@
 
 
     <!--JSON Web Token Dialog-->
-    <string name="STRING_JSON_WEB_TOKEN_EXPIRATION">"JWT Expiration"</string>
     <string name="STRING_JSON_KYC2_USER_ACCOUNT">"User Account"</string>
 
     <!--QR Code Parser-->

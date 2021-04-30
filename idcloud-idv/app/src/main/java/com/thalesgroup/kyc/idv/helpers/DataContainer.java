@@ -27,6 +27,7 @@
 
 package com.thalesgroup.kyc.idv.helpers;
 
+import com.thalesgroup.idv.sdk.nfc.CaptureResult;
 import com.thalesgroup.kyc.idv.helpers.communication.KYCCommunication;
 
 public final class DataContainer {
@@ -34,6 +35,14 @@ public final class DataContainer {
     //region Define
 
     static private DataContainer sInstance = null;
+    // MRZ data IDV
+    public String mDoc;
+    public String mDob;
+    public String mDoe;
+
+    // NFC data IDV
+    public CaptureResult mNfcResult;
+    public String mIdvChipResult;
 
     // doc data IDV
     public byte[] mDocFront;
@@ -44,7 +53,7 @@ public final class DataContainer {
     public String mEnhancedSelfieJson;
 
     // Server session data
-    public int mVerificationStep = KYCCommunication.STEP_START_VERIFICATION;
+    public int mVerificationStep = KYCCommunication.STEP_START_DOC_VERIFICATION;
     public KYCCommunication mKYCCommunication;
     //endregion
 
@@ -66,11 +75,16 @@ public final class DataContainer {
     //region Public API
 
     public void clearDocData() {
+        mNfcResult = null;
+        mDoc = null;
+        mDob = null;
+        mDoe = null;
         mDocFront = null;
         mDocBack = null;
         mSelfie = null;
         mEnhancedSelfieJson = null;
-        mVerificationStep = KYCCommunication.STEP_START_VERIFICATION;
+        mIdvChipResult = null;
+        mVerificationStep = KYCCommunication.STEP_START_DOC_VERIFICATION;
     }
 
     //endregion

@@ -27,6 +27,7 @@
 
 package com.thalesgroup.kyc.idv.helpers.communication;
 
+import com.thalesgroup.kyc.idv.helpers.DataContainer;
 import com.thalesgroup.kyc.idv.helpers.util.JsonUtil;
 
 import org.json.JSONException;
@@ -48,6 +49,7 @@ public class KYCResponse implements Serializable {
     private final String mType;
     private final int mCode;
     private KYCDocument mDocument = null;
+    private KYCChipNfc mChipNfc = null;
     private KYCFace mFace = null;
     private KYCEnhancedLiveness mEnhancedLiveness = null;
 
@@ -73,9 +75,18 @@ public class KYCResponse implements Serializable {
             if (object.has("document")) {
                 mDocument = new KYCDocument(object.getJSONObject("document"));
             }
+
+            if (object.has("chipResult")) {
+                mChipNfc = new KYCChipNfc(object.getJSONObject("chipResult"));
+            }
+            else if (DataContainer.instance().mIdvChipResult != null) {
+                mChipNfc = new KYCChipNfc(new JSONObject(DataContainer.instance().mIdvChipResult));
+            }
+
             if (object.has("face")) {
                 mFace = new KYCFace(object.getJSONObject("face"));
             }
+
             if (object.has("enhancedLiveness")) {
                 mEnhancedLiveness = new KYCEnhancedLiveness(object.getJSONObject("enhancedLiveness"));
             }
@@ -131,6 +142,15 @@ public class KYCResponse implements Serializable {
      */
     public int getCode() {
         return mCode;
+    }
+
+    /**
+     * Gets the {@code KYCChipNfc}.
+     *
+     * @return {@code KYCChipNfc}.
+     */
+    public KYCChipNfc getChipNfc() {
+        return mChipNfc;
     }
 
     /**

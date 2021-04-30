@@ -8,8 +8,8 @@ android {
         applicationId "com.thalesgroup.kyc.idvconnect"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 321004
-        versionName "3.2.1-004"
+        versionCode 321008
+        versionName "3.2.1-008"
         testInstrumentationRunner "androidx.move_in_from_left.runner.AndroidJUnitRunner"
         ndkVersion '16.1.4479499'
     }
@@ -31,10 +31,10 @@ dependencies {
     api fileTree(dir: 'libs', include: ['*.aar'])
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'com.google.android.material:material:1.3.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
-    implementation 'com.google.android.gms:play-services-vision:20.1.2'
+    implementation 'com.google.android.gms:play-services-vision:20.1.3'
     implementation 'com.madgag.spongycastle:core:1.58.0.0'
     implementation 'androidx.core:core-ktx:1.3.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
@@ -48,14 +48,14 @@ dependencies {
     implementation 'me.dm7.barcodescanner:zxing:1.9.8'
 
     // Acuant
-    implementation 'com.acuant:acuantcommon:11.4.10'
-    implementation 'com.acuant:acuantcamera:11.4.10'
-    implementation 'com.acuant:acuantimagepreparation:11.4.10@aar'
-    implementation 'com.acuant:acuantdocumentprocessing:11.4.10'
-    implementation 'com.acuant:acuantfacematch:11.4.10'
-    implementation 'com.acuant:acuanthgliveness:11.4.10'
-    implementation 'com.acuant:acuantfacecapture:11.4.10'
-    implementation 'com.acuant:acuantpassiveliveness:11.4.10'
+    implementation "com.acuant:acuantcommon:$acuantSdkVersion"
+    implementation "com.acuant:acuantcamera:$acuantSdkVersion"
+    implementation "com.acuant:acuantimagepreparation:$acuantSdkVersion@aar"
+    implementation "com.acuant:acuantdocumentprocessing:$acuantSdkVersion"
+    implementation "com.acuant:acuantfacematch:$acuantSdkVersion"
+    implementation "com.acuant:acuanthgliveness:$acuantSdkVersion"
+    implementation "com.acuant:acuantfacecapture:$acuantSdkVersion"
+    implementation "com.acuant:acuantpassiveliveness:$acuantSdkVersion"
 
     // JWTDecode
     implementation 'com.auth0.android:jwtdecode:1.4.0'

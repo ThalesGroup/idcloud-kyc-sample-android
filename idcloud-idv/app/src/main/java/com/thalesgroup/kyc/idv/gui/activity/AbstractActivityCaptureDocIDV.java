@@ -32,6 +32,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.TextureView;
@@ -43,7 +45,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -80,7 +81,8 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
     protected LinearLayout mLayoutTutorial = null;
     protected FrameLayout mLayoutPreview = null;
     protected ImageButton mShutterButton = null;
-    protected ImageView mCaptureFrame = null;
+    protected RelativeLayout mCaptureFrame = null;
+    protected ImageView mCaptureFrameMrz = null;
     protected Configuration mConfiguration = null;
 
     protected RelativeLayout mLayoutResult = null;
@@ -102,17 +104,19 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
     protected boolean mPaused = false;
     protected boolean mAutocapture = false;
     protected CaptureSDK mSdk;
+    protected boolean mPausing = false;
+    protected boolean mInitializing = false;
 
     //endregion
 
     //region Life Cycle
-
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // Get argument to determine document type.
         mDocumentType = (AbstractOption.DocumentType) getIntent().getSerializableExtra(MainActivity.BUNDLE_ARGUMENT_DOC_TYPE);
+
+        mSdk = new CaptureSDK();
 
         // Load basic visual components.
         initViews();
@@ -122,25 +126,33 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
-        mSdk = new CaptureSDK();
-
-        // SDK Handle camera permission in case we don't have them already.
-
         mCurrentStep = 0;
         mPaused = false;
         mAutocapture = false;
+        mPausing = false;
 
         // Initialise SDK with calculated ideal size.
         initSDK();
     }
 
     @Override
-    public void onDestroy() {
-        if (mSdk != null) {
-            mSdk.finish();
+    public void onPause() {
+        mPausing = true;
+
+        if (!mInitializing) {
+            try {
+                if (mSdk != null) {
+                    mSdk.stop();
+                    mSdk.finish();
+                }
+            } catch (Throwable e) {
+                Log.e("KYC", e.toString());
+            }
         }
 
-        super.onDestroy();
+        mInitializing = false;
+
+        super.onPause();
     }
 
     //endregion
@@ -148,6 +160,8 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
     //region SDK CaptureCallback.InitCallback
     @Override
     public void onInit(boolean isCompleted, int errorCode) {
+        mInitializing = false;
+
         if (isCompleted) {
             if (BuildConfig.DEBUG) {
                 Log.i(TAG, "SDK init OK!");
@@ -195,6 +209,17 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
     //region CaptureCallback.StartCallback
     @Override
     public void onProcessedFrame(final CaptureResult result) {
+//        if (BuildConfig.DEBUG) {
+//            Log.w(TAG, "onProcessedFrame()");
+//            Log.i("KYC", "Error Code: " + result.errorCode);
+//            Log.i("KYC", "QCR.all: " + result.qualityCheckResults.all);
+//            Log.i("KYC", "QCR.noFocused: " + result.qualityCheckResults.noFocused);
+//            Log.i("KYC", "QCR.blur: " + result.qualityCheckResults.blur);
+//            Log.i("KYC", "QCR.glare: " + result.qualityCheckResults.glare);
+//            Log.i("KYC", "QCR.photocopy: " + result.qualityCheckResults.photocopy);
+//            Log.i("KYC", "QCR.contrast: " + result.qualityCheckResults.contrast);
+//            Log.i("KYC", "QCR.darkness: " + result.qualityCheckResults.darkness);
+//        }
 
         // Update quality checks on UI
         runOnUiThread(() -> {
@@ -305,7 +330,13 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
 
         applyConfig();
 
-        mSdk.start(mConfiguration, this);
+        try {
+            if (mSdk != null) {
+                mSdk.start(mConfiguration, this);
+            }
+        } catch (Throwable e) {
+            Log.e("KYC", e.toString());
+        }
     }
 
     private void stopSDK() {
@@ -313,7 +344,13 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
             Log.w(TAG, "stopSDK()");
         }
 
-        mSdk.stop();
+        try {
+            if (mSdk != null) {
+                mSdk.stop();
+            }
+        } catch (Throwable e) {
+            Log.e("KYC", e.toString());
+        }
     }
 
     private void initViews() {
@@ -350,7 +387,7 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
 
         // Capture frame & Hourglass
         mCaptureFrame = findViewById(R.id.capture_frame);
-        mCaptureFrame.setAlpha(.0f);
+        mCaptureFrameMrz = findViewById(R.id.capture_frame_mrz);
 
         resizeCaptureFrame();
 
@@ -440,7 +477,7 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
         mConfiguration.detectionMode = KYCManager.getInstance().getConfigEdgeMode();
 
         // Document Type
-        if (mDocumentType == AbstractOption.DocumentType.Passport) {
+        if (KYCManager.getInstance().getDocType() == AbstractOption.DocumentType.Passport) {
             mConfiguration.captureDocuments = Document.DocumentModePassport;
         } else {
             mConfiguration.captureDocuments = Document.DocumentModeIdDocument;
@@ -510,14 +547,25 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
     }
 
     private void initSDK() {
-        final KYCManager managerKYC = KYCManager.getInstance();
+        final Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(() -> {
+            if (mPausing) {
+                return;
+            }
 
-        // Display/Hide shutter button and do capture manually/automatically
-        mAutocapture = !managerKYC.isManualScan();
+            if (!mInitializing) {
+                mInitializing = true;
 
-        // Init the SDK with success handler
-        TextureView view = findViewById(R.id.camera);
-        mSdk.init(KYCConfiguration.IDV_LICENSE, view, this);
+                final KYCManager managerKYC = KYCManager.getInstance();
+
+                // Display/Hide shutter button and do capture manually/automatically
+                mAutocapture = !managerKYC.isManualScan();
+
+                // Init the SDK with success handler
+                TextureView view = findViewById(R.id.camera);
+                mSdk.init(KYCConfiguration.IDV_LICENSE, view, this);
+            }
+        }, 200);
     }
 
     protected abstract void resizeCaptureFrame();
@@ -610,7 +658,7 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
                                                                                  R.string.kyc_doc_scan_detail_top,
                                                                                  R.string.kyc_doc_scan_detail_bottom,
                                                                                  AssetHelper.ASSET_DOC_STEP_ID_CARD_FRONT);
-            stepDetail.presentInGroupView(mLayoutPreview, mCaptureFrame, this::resumeSDK, false);
+            stepDetail.presentInGroupView(mLayoutPreview, mCaptureFrame, this::resumeSDK, true);
 
             // Pause SDK while detail is visible.
             pauseSDK();
@@ -683,7 +731,7 @@ public abstract class AbstractActivityCaptureDocIDV extends AppCompatActivity
                                                                              R.string.kyc_doc_scan_detail_top,
                                                                              R.string.kyc_doc_scan_detail_bottom,
                                                                              AssetHelper.ASSET_DOC_STEP_PASSPORT);
-        stepDetail.presentInGroupView(mLayoutPreview, mCaptureFrame, this::resumeSDK, false);
+        stepDetail.presentInGroupView(mLayoutPreview, mCaptureFrame, this::resumeSDK, true);
 
         // Pause SDK while detail is visible.
         pauseSDK();

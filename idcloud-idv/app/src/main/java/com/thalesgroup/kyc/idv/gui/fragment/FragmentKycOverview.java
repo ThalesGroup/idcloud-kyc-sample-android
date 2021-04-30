@@ -27,10 +27,13 @@
 
 package com.thalesgroup.kyc.idv.gui.fragment;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,15 +41,20 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.thalesgroup.idv.sdk.nfc.CaptureResult;
 import com.thalesgroup.kyc.idv.R;
 import com.thalesgroup.kyc.idv.helpers.DataContainer;
 import com.thalesgroup.kyc.idv.helpers.KYCManager;
+import com.thalesgroup.kyc.idv.helpers.communication.KYCChipAction;
+import com.thalesgroup.kyc.idv.helpers.communication.KYCCommScheduler;
 import com.thalesgroup.kyc.idv.helpers.communication.KYCCommunication;
 import com.thalesgroup.kyc.idv.helpers.communication.KYCFailedVerification;
 import com.thalesgroup.kyc.idv.helpers.communication.KYCResponse;
 import com.thalesgroup.kyc.idv.helpers.communication.KYCSession;
+import com.thalesgroup.kyc.idv.helpers.util.ImageUtil;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.FragmentManager;
@@ -66,17 +74,21 @@ public class FragmentKycOverview extends AbstractFragmentBase {
     private ImageView mIvSelfieExtracted;
 
     // Result part.
-    private LinearLayout mLayoutUserInfo;
+    private RelativeLayout mLayoutUserInfo;
     private TextView mTvResultHeader;
-    private TextView mTvResultCaption;
-    private TextView mTvResultValue;
+    private TextView mTvResultCaptionName;
+    private TextView mTvResultValueName;
+    private TextView mTvResultCaptionInfo;
+    private TextView mTvResultValueInfo;
     private ImageView mIvResultIcon;
 
+    private LinearLayout mLayoutCheckDoc;
+    private LinearLayout mLayoutCheckNFC;
     private LinearLayout mLayoutCheckEPL;
     private LinearLayout mLayoutCheckFace;
 
     private Button mButtonNext;
-    private KYCCommunication mKYCCommunication;
+    private KYCCommunication mKYCCommunication = DataContainer.instance().mKYCCommunication;
 
     private View mRetValue;
     private int mRetryStep;
@@ -85,6 +97,7 @@ public class FragmentKycOverview extends AbstractFragmentBase {
 
     //region Life Cycle
 
+    @SuppressLint("StaticFieldLeak")
     @Override
     public View onCreateView(final LayoutInflater inflater,
                              final ViewGroup container,
@@ -100,10 +113,14 @@ public class FragmentKycOverview extends AbstractFragmentBase {
         mButtonNext = mRetValue.findViewById(R.id.fragment_kyc_overview_button_next);
         mLayoutUserInfo = mRetValue.findViewById(R.id.fragment_kyc_overview_layout_user_info);
         mTvResultHeader = mRetValue.findViewById(R.id.fragment_kyc_overview_tv_status);
-        mTvResultCaption = mRetValue.findViewById(R.id.fragment_kyc_overview_tv_user_info_caption);
-        mTvResultValue = mRetValue.findViewById(R.id.fragment_kyc_overview_tv_user_info_value);
+        mTvResultCaptionName = mRetValue.findViewById(R.id.fragment_kyc_overview_tv_user_name_caption);
+        mTvResultValueName = mRetValue.findViewById(R.id.fragment_kyc_overview_tv_user_name_value);
+        mTvResultCaptionInfo = mRetValue.findViewById(R.id.fragment_kyc_overview_tv_user_info_caption);
+        mTvResultValueInfo = mRetValue.findViewById(R.id.fragment_kyc_overview_tv_user_info_value);
         mIvResultIcon = mRetValue.findViewById(R.id.fragment_kyc_overview_iv_progress);
 
+        mLayoutCheckDoc = mRetValue.findViewById(R.id.fragment_kyc_overview_layout_check_doc);
+        mLayoutCheckNFC = mRetValue.findViewById(R.id.fragment_kyc_overview_layout_check_nfc);
         mLayoutCheckEPL = mRetValue.findViewById(R.id.fragment_kyc_overview_layout_check_epl);
         mLayoutCheckFace = mRetValue.findViewById(R.id.fragment_kyc_overview_layout_check_face);
 
@@ -120,11 +137,13 @@ public class FragmentKycOverview extends AbstractFragmentBase {
         mLayoutUserInfo.setVisibility(View.GONE);
 
         // Hide Checks
+        mLayoutCheckDoc.setVisibility(View.GONE);
+        mLayoutCheckNFC.setVisibility(View.GONE);
         mLayoutCheckEPL.setVisibility(View.GONE);
         mLayoutCheckFace.setVisibility(View.GONE);
 
         // Update user interface.
-        mButtonNext.setOnClickListener(view -> onButtonClickSubmit());
+        mButtonNext.setVisibility(View.INVISIBLE);
 
         mRetValue.setFocusableInTouchMode(true);
         mRetValue.requestFocus();
@@ -138,6 +157,196 @@ public class FragmentKycOverview extends AbstractFragmentBase {
 
             return false;
         });
+
+        Log.i("KYC", "Scheduler state: " + KYCCommScheduler.getState());
+        Log.i("KYC", "Scheduler retry step: " + KYCCommScheduler.getRetryStep());
+
+        // Communication Scheduler
+        new AsyncTask<Void, Void, Void>() {
+            int state = KYCCommScheduler.getState();
+            int retryStep = KYCCommScheduler.getRetryStep();
+
+            @Override
+            protected void onPreExecute() {
+                getMainActivity().progressBarShow();
+
+                if (KYCManager.getInstance().isNfcMode()) {
+                    displayResult(null);
+                }
+
+                String status;
+
+                if (state == KYCCommScheduler.FAILURE_RETRY) {
+                    KYCCommScheduler.sendData(retryStep);
+                }
+
+                if (KYCManager.getInstance().isFacialRecognition()) {
+                    if ((state == KYCCommScheduler.FAILURE_RETRY) && (retryStep == KYCCommunication.STEP_SELFIE_VERIFICATION)) {
+                        status = getString(R.string.fragment_kyc_overview_verif_doc) + getString(R.string.fragment_kyc_overview_verif_done);
+                    }
+                    else {
+                        status = getString(R.string.fragment_kyc_overview_verif_doc) + getString(R.string.fragment_kyc_overview_verif_ongoing);
+                    }
+                    status += "\n";
+                    status += getString(R.string.fragment_kyc_overview_verif_face) + getString(R.string.fragment_kyc_overview_verif_pending);
+                } else {
+                    status = getString(R.string.fragment_kyc_overview_verif_doc) + getString(R.string.fragment_kyc_overview_verif_ongoing);
+                }
+
+                mTvResultHeader.setText(status);
+
+                super.onPreExecute();
+            }
+
+            @Override
+            protected Void doInBackground(Void... params) {
+                boolean isStop = false;
+                boolean isSelfieSent = false;
+
+                do {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    state = KYCCommScheduler.getState();
+
+                    switch (state) {
+                        case KYCCommScheduler.SUCCESS:
+                            publishProgress(null);
+                            isStop = true;
+                            break;
+
+                        case KYCCommScheduler.FAILURE_RETRY:
+                        case KYCCommScheduler.FAILURE:
+                        case KYCCommScheduler.FAILURE_ABORT:
+                            isStop = true;
+                            break;
+
+                        case KYCCommScheduler.SENDING_DOC:
+                        case KYCCommScheduler.SENDING_SELFIE:
+                            publishProgress(null);
+                            break;
+
+                        case KYCCommScheduler.WAITING_SELFIE:
+                            if (!isSelfieSent) {
+                                isSelfieSent = true;
+
+                                KYCCommScheduler.sendData(KYCCommunication.STEP_SELFIE_VERIFICATION);
+                                publishProgress(null);
+                            }
+                            break;
+                    }
+                }
+                while (!isStop);
+
+                return null;
+            }
+
+            @Override
+            protected void onProgressUpdate(Void... values) {
+                showBitmap(DataContainer.instance().mDocFront, ivDocFront);
+                showBitmap(DataContainer.instance().mDocBack, ivDocBack);
+
+                if (DataContainer.instance().mSelfie != null) {
+                    mLayoutSelfie.setVisibility(View.VISIBLE);
+
+                    byte[] _selfie = DataContainer.instance().mSelfie;
+                    showBitmap(_selfie, mIvSelfie);
+                }
+
+                state = KYCCommScheduler.getState();
+
+                String status = (String) mTvResultHeader.getText();
+
+                switch (state) {
+                    case KYCCommScheduler.SENDING_DOC:
+                        if (KYCManager.getInstance().isFacialRecognition()) {
+                            status = getString(R.string.fragment_kyc_overview_verif_doc) + getString(R.string.fragment_kyc_overview_verif_ongoing);
+                            status += "\n";
+                            status += getString(R.string.fragment_kyc_overview_verif_face) + getString(R.string.fragment_kyc_overview_verif_pending);
+                        } else {
+                            status = getString(R.string.fragment_kyc_overview_verif_doc) + getString(R.string.fragment_kyc_overview_verif_ongoing);
+                        }
+                        break;
+
+                    case KYCCommScheduler.SENDING_SELFIE:
+                        status = getString(R.string.fragment_kyc_overview_verif_doc) + getString(R.string.fragment_kyc_overview_verif_done);
+                        status += "\n";
+                        status += getString(R.string.fragment_kyc_overview_verif_face) + getString(R.string.fragment_kyc_overview_verif_ongoing);
+                        break;
+
+                    case KYCCommScheduler.WAITING_SELFIE:
+                        status = getString(R.string.fragment_kyc_overview_verif_doc) + getString(R.string.fragment_kyc_overview_verif_done);
+                        status += "\n";
+                        status += getString(R.string.fragment_kyc_overview_verif_face) + getString(R.string.fragment_kyc_overview_verif_pending);
+                        break;
+
+                    case KYCCommScheduler.SUCCESS:
+                        if (KYCManager.getInstance().isFacialRecognition()) {
+                            status = getString(R.string.fragment_kyc_overview_verif_doc) + getString(R.string.fragment_kyc_overview_verif_done);
+                            status += "\n";
+                            status += getString(R.string.fragment_kyc_overview_verif_face) + getString(R.string.fragment_kyc_overview_verif_done);
+                        } else {
+                            status = getString(R.string.fragment_kyc_overview_verif_doc) + getString(R.string.fragment_kyc_overview_verif_done);
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+
+                mTvResultHeader.setText(status);
+
+                super.onProgressUpdate(values);
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                showBitmap(DataContainer.instance().mDocFront, ivDocFront);
+                showBitmap(DataContainer.instance().mDocBack, ivDocBack);
+
+                if (DataContainer.instance().mSelfie != null) {
+                    mLayoutSelfie.setVisibility(View.VISIBLE);
+
+                    byte[] _selfie = DataContainer.instance().mSelfie;
+                    showBitmap(_selfie, mIvSelfie);
+                }
+
+                switch (state) {
+                    case KYCCommScheduler.SUCCESS:
+                        // Operation finished. We can hide progress bar.
+                        getMainActivity().progressBarHide();
+                        // Update UI with values from response.
+                        displayResult(KYCCommScheduler.getResponse());
+                        break;
+
+                    case KYCCommScheduler.FAILURE:
+                        // Operation finished. We can hide progress bar.
+                        getMainActivity().progressBarHide();
+                        // Display issue description.
+                        displayError(KYCCommScheduler.getError(), null, KYCSession.RETRY_NONE);
+                        break;
+
+                    case KYCCommScheduler.FAILURE_RETRY:
+                        // Operation finished. We can hide progress bar.
+                        getMainActivity().progressBarHide();
+                        // Display issue description.
+                        displayError(KYCCommScheduler.getError() + "\n" + getString(R.string.try_again), null, KYCCommScheduler.getRetryStep());
+                        break;
+
+                    case KYCCommScheduler.FAILURE_ABORT:
+                        // Operation finished. We can hide progress bar.
+                        getMainActivity().progressBarHide();
+                        // Display issue description.
+                        displayError(KYCCommScheduler.getError(), null, KYCSession.RETRY_ABORT);
+                        break;
+                }
+
+                super.onPostExecute(aVoid);
+            }
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
         return mRetValue;
     }
@@ -181,8 +390,13 @@ public class FragmentKycOverview extends AbstractFragmentBase {
                                     final String caption,
                                     final String value) {
         if (value != null && !"null".equals(value) && !value.isEmpty()) {
-            retCaption.append("\n").append(caption).append(":");
-            retValue.append("\n").append(value);
+            if (retCaption.length() > 1)
+            {
+                retCaption.append("\n");
+                retValue.append("\n");
+            }
+            retCaption.append(caption).append(":");
+            retValue.append(value);
         }
     }
 
@@ -198,8 +412,13 @@ public class FragmentKycOverview extends AbstractFragmentBase {
                                  final StringBuilder retValue,
                                  final String caption,
                                  final int value) {
-        retCaption.append("\n").append(caption).append(":");
-        retValue.append("\n").append(value);
+        if (retCaption.length() > 1)
+        {
+            retCaption.append("\n");
+            retValue.append("\n");
+        }
+        retCaption.append(caption).append(":");
+        retValue.append(value);
     }
 
     /**
@@ -210,159 +429,283 @@ public class FragmentKycOverview extends AbstractFragmentBase {
     private void displayResult(final KYCResponse result) {
         mRetryStep = KYCSession.RETRY_NONE;
 
-        // Make sure that response is valid and positive.
-        if (result == null || result.getDocument() == null) {
-            displayError("Failed to get valid response from server.", null, KYCSession.RETRY_NONE);
-            return;
-        } else if (
-            // DV status
-                (!result.getDocument().getResult().equalsIgnoreCase("SUCCESS"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("DATA_INTEGRITY_ISSUE"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("SECURITY_ISSUE"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("DOCUMENT_EXPIRED"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("QA_NOT_PASSED"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("QA_PASSED"))
+        // --------
+        // NFC Case
+        // --------
+        if (KYCManager.getInstance().isNfcMode()) {
+            // Display NFC data if any
+            if (result != null && result.getChipNfc() == null) {
+                displayError("Failed to get valid response from server.", null, KYCSession.RETRY_NONE);
+                return;
+            } else if (DataContainer.instance().mNfcResult != null) {
+                CaptureResult captureResult = DataContainer.instance().mNfcResult;
 
-                        // DV+FV+EL status
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("NoFailedChecks"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("DocumentExpired"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("MRZCheckFailed"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("SecurityCheckFailed"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("VIZCrosscheckFailed"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("NoFailedSubsetOfChecks"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("DocumentPageMissing"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("SpecimenDetected"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("QA_OK"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("QA_KO"))
-                        &&(!result.getDocument().getResult().equalsIgnoreCase("QA_NOT_DONE"))
-        )
-       {
-            displayError(result.getDocument().getResult(), result, KYCSession.RETRY_ABORT);
-            return;
-        }
+                // Build user information strings.
+                final StringBuilder captionName = new StringBuilder();
+                final StringBuilder valueName = new StringBuilder();
+                final StringBuilder captionInfo = new StringBuilder();
+                final StringBuilder valueInfo = new StringBuilder();
 
-        // Build user information strings.
-        final StringBuilder caption = new StringBuilder();
-        final StringBuilder value = new StringBuilder();
-        String firstName = "";
-        String lastName = "";
+                String name = captureResult.parsedData.personalDetails.fullName.replace("<", " ");
 
-        // Name available in MRZ?
-        if (result.getDocument().getMRZ() != null) {
-            firstName = result.getDocument().getMRZ().getFirstName();
-            lastName = result.getDocument().getMRZ().getLastName();
-        }
+                captionName.append(getString(R.string.kyc_result_name));
+                valueName.append(name);
 
-        // Default name if not in MRZ
-        if (firstName.equals("")) {
-            firstName = result.getDocument().getFirstName();
-        }
-        if (lastName.equals("")) {
-            lastName = result.getDocument().getSurname();
-        }
+                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_birth_date), captureResult.parsedData.personalDetails.dateOfBirth);
+                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_gender), captureResult.parsedData.mrz.gender);
+                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_nationality), captureResult.parsedData.mrz.nationality);
+                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_doc_type), captureResult.parsedData.mrz.documentType.replace("<", " "));
+                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_doc_number), captureResult.parsedData.mrz.documentNumber);
 
-        if (!firstName.equals("") && !lastName.equals("")) {
-            caption.append(getString(R.string.kyc_result_name_surname)).append('\n');
-            if (firstName.length() >= 16) {
-                caption.append('\n');
+                String expiryDate = captureResult.parsedData.mrz.dateOfExpiry;
+                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_expiry_date), "20" + expiryDate.substring(0, 2) + "/" + expiryDate.substring(2, 4) + "/" + expiryDate.substring(4));
+
+                // Extracted selfie
+                if (captureResult.parsedData.faceImage != null) {
+                    mIvSelfieExtracted.setVisibility(View.VISIBLE);
+                    showBitmap(ImageUtil.bitmapToBytes(captureResult.parsedData.faceImage, Bitmap.CompressFormat.JPEG), mIvSelfieExtracted);
+
+                    // Add margin to left photo. It was not there from beginning since there
+                    // was just one image.
+                    final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mIvSelfie.getLayoutParams();
+                    params.setMargins(0, 0, 8, 0);
+                    mIvSelfie.setLayoutParams(params);
+
+                    // Selfie part might be hidden for document scan only, but we sill have extracted image.
+                    mLayoutSelfie.setVisibility(View.VISIBLE);
+                }
+
+                // Server info if available
+                if (result != null) {
+                    // Enhanced Passive Liveness Result?
+                    if (result.getEnhancedLiveness() != null) {
+                        appendResultInt(captionInfo, valueInfo, getString(R.string.kyc_result_liveness_score), result.getEnhancedLiveness().getScore());
+                    }
+
+                    // Update status header + icon.
+                    if (result.getChipNfc().getChipOutput().toUpperCase().equals("OK")) {
+                        mTvResultHeader.setVisibility(View.GONE);
+                        mLayoutCheckNFC.setVisibility(View.VISIBLE);
+                    } else {
+                        String docRes = getString(R.string.fragment_kyc_nfc_status) + " ";
+
+                        if (result.getChipNfc().getChipOutput().toUpperCase().equals("NOK")) {
+                            docRes += "Failed";
+                        }
+                        else if (result.getChipNfc().getChipOutput().toUpperCase().equals("CSANOTFOUND")) {
+                            docRes += "Certificate not found";
+                        }
+                        else {
+                            docRes += result.getChipNfc().getChipOutput();
+                        }
+
+                        mTvResultHeader.setText(docRes);
+                    }
+
+                    mIvResultIcon.setVisibility(View.GONE);
+
+                    // Update NFC Actions
+                    List<KYCChipAction> kycNfcActions = result.getChipNfc().getChipActions();
+
+                    for (int i = 0; i < result.getChipNfc().getChipActions().size(); i++) {
+                        KYCChipAction action = kycNfcActions.get(i);
+
+                        appendResultString(captionInfo, valueInfo, action.getName(), String.valueOf(action.getResultValueText()));
+                    }
+
+                    // -------------
+                    // Update checks
+                    // -------------
+
+                    if (KYCManager.getInstance().isFacialRecognition()) {
+                        mLayoutCheckEPL.setVisibility(View.VISIBLE);
+                        if (result.getEnhancedLiveness().getScore() < 80) {
+                            ((ImageView)mRetValue.findViewById(R.id.fragment_kyc_overview_icon_check_epl)).setImageResource(R.drawable.error);
+                        }
+
+                        mLayoutCheckFace.setVisibility(View.VISIBLE);
+                        if (result.getFace().getResult().equals("FACE_NOT_MATCH")) {
+                            ((ImageView)mRetValue.findViewById(R.id.fragment_kyc_overview_icon_check_face)).setImageResource(R.drawable.error);
+                        }
+                    }
+                }
+
+                // Show / Hide whole section
+                mLayoutUserInfo.setVisibility(captionInfo.length() > 0 ? View.VISIBLE : View.GONE);
+                mTvResultCaptionName.setText(captionName.toString());
+                mTvResultValueName.setText(valueName.toString());
+                mTvResultCaptionInfo.setText(captionInfo.toString());
+                mTvResultValueInfo.setText(valueInfo.toString());
+
+                // Update button function
+                mButtonNext.setVisibility(View.VISIBLE);
+                mButtonNext.setText(R.string.fragment_kyc_overview_button_done);
+                mButtonNext.setOnClickListener(view -> onButtonClickDone());
             }
-            if (lastName.length() >= 16) {
-                caption.append('\n');
+        }
+
+        // ----------------------
+        // Standard Document Case
+        // ----------------------
+        else {
+            // Make sure that response is valid and positive.
+            if (result == null || result.getDocument() == null) {
+                displayError("Failed to get valid response from server.", null, KYCSession.RETRY_NONE);
+                return;
+            } else if (
+                         // DV status
+                         (!result.getDocument().getResult().equalsIgnoreCase("SUCCESS"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("DATA_INTEGRITY_ISSUE"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("SECURITY_ISSUE"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("DOCUMENT_EXPIRED"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("QA_NOT_PASSED"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("QA_PASSED"))
+
+                         // DV+FV+EL status
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("NoFailedChecks"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("DocumentExpired"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("MRZCheckFailed"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("SecurityCheckFailed"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("VIZCrosscheckFailed"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("NoFailedSubsetOfChecks"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("DocumentPageMissing"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("SpecimenDetected"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("QA_OK"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("QA_KO"))
+                       &&(!result.getDocument().getResult().equalsIgnoreCase("QA_NOT_DONE"))
+                     )
+           {
+                displayError(result.getDocument().getResult(), result, KYCSession.RETRY_ABORT);
+                return;
+           }
+
+            // Build user information strings.
+            final StringBuilder captionName = new StringBuilder();
+            final StringBuilder valueName = new StringBuilder();
+            final StringBuilder captionInfo = new StringBuilder();
+            final StringBuilder valueInfo = new StringBuilder();
+            String firstName = "";
+            String lastName = "";
+
+            // Name available in MRZ?
+            if (result.getDocument().getMRZ() != null) {
+                firstName = result.getDocument().getMRZ().getFirstName();
+                lastName = result.getDocument().getMRZ().getLastName();
             }
-            value.append(firstName).append(' ').append(lastName).append('\n');
-        }
 
-        appendResultString(caption, value, getString(R.string.kyc_result_gender), result.getDocument().getGender());
-        appendResultString(caption, value, getString(R.string.kyc_result_nationality), result.getDocument().getNationality());
-        appendResultString(caption, value, getString(R.string.kyc_result_expiry_date), result.getDocument().getExpiryDate());
-        appendResultString(caption, value, getString(R.string.kyc_result_birth_date), result.getDocument().getBirthDate());
-        appendResultString(caption, value, getString(R.string.kyc_result_doc_number), result.getDocument().getDocumentNumber());
-        appendResultString(caption, value, getString(R.string.kyc_result_doc_type), result.getDocument().getDocumentType());
-        appendResultInt(caption, value, getString(R.string.kyc_result_verification_count), result.getDocument().getTotalVerificationsDone());
-        appendResultInt(caption, value, getString(R.string.fragment_kyc_alerts), result.getDocument().getFailedVerifications() != null ? result.getDocument().getFailedVerifications().size() : 0);
+            // Default name if not in MRZ
+            if (firstName.equals("")) {
+                firstName = result.getDocument().getFirstName();
+            }
+            if (lastName.equals("")) {
+                lastName = result.getDocument().getSurname();
+            }
 
-        // Enhanced Passive Liveness Result?
-        if (result.getEnhancedLiveness() != null) {
-            appendResultInt(caption, value, getString(R.string.kyc_result_liveness_score), result.getEnhancedLiveness().getScore());
-        }
+            valueName.append(firstName).append(' ').append(lastName);
 
-        // Show / Hide whole section
-        mLayoutUserInfo.setVisibility(caption.length() > 0 ? View.VISIBLE : View.GONE);
-        mTvResultCaption.setText(caption.toString());
-        mTvResultValue.setText(value.toString());
+            if (!firstName.equals("") && !lastName.equals("")) {
+                captionName.append(getString(R.string.kyc_result_name_surname));
+            }
 
-        // Extracted selfie
-        if (result.getDocument().getPortrait() != null) {
-            mIvSelfieExtracted.setVisibility(View.VISIBLE);
-            showBitmap(result.getDocument().getPortrait(), mIvSelfieExtracted);
+            appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_gender), result.getDocument().getGender());
+            appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_nationality), result.getDocument().getNationality());
+            appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_expiry_date), result.getDocument().getExpiryDate());
+            appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_birth_date), result.getDocument().getBirthDate());
+            appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_doc_number), result.getDocument().getDocumentNumber());
+            appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_doc_type), result.getDocument().getDocumentType());
+            appendResultInt(captionInfo, valueInfo, getString(R.string.kyc_result_verification_count), result.getDocument().getTotalVerificationsDone());
+            appendResultInt(captionInfo, valueInfo, getString(R.string.fragment_kyc_alerts), result.getDocument().getFailedVerifications() != null ? result.getDocument().getFailedVerifications().size() : 0);
 
-            // Add margin to left photo. It was not there from beginning since there
-            // was just one image.
-            final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mIvSelfie.getLayoutParams();
-            params.setMargins(0, 0, 8, 0);
-            mIvSelfie.setLayoutParams(params);
+            // Enhanced Passive Liveness Result?
+            if (result.getEnhancedLiveness() != null) {
+                appendResultInt(captionInfo, valueInfo, getString(R.string.kyc_result_liveness_score), result.getEnhancedLiveness().getScore());
+            }
 
-            // Selfie part might be hidden for document scan only, but we sill have extracted image.
-            mLayoutSelfie.setVisibility(View.VISIBLE);
-        }
+            // Show / Hide whole section
+            mLayoutUserInfo.setVisibility(captionInfo.length() > 0 ? View.VISIBLE : View.GONE);
+            mTvResultCaptionName.setText(captionName.toString());
+            mTvResultValueName.setText(valueName.toString());
+            mTvResultCaptionInfo.setText(captionInfo.toString());
+            mTvResultValueInfo.setText(valueInfo.toString());
 
-        // Update status header + icon.
-        String docRes = getString(R.string.fragment_kyc_doc_status) + " " + result.getDocument().getResult();
-        mTvResultHeader.setText(docRes);
-        mIvResultIcon.setVisibility(View.GONE);
+            // Extracted selfie
+            if (result.getDocument().getPortrait() != null) {
+                mIvSelfieExtracted.setVisibility(View.VISIBLE);
+                showBitmap(result.getDocument().getPortrait(), mIvSelfieExtracted);
 
-        // -------------
-        // Update checks
-        // -------------
+                // Add margin to left photo. It was not there from beginning since there
+                // was just one image.
+                final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mIvSelfie.getLayoutParams();
+                params.setMargins(0, 0, 8, 0);
+                mIvSelfie.setLayoutParams(params);
 
+                // Selfie part might be hidden for document scan only, but we sill have extracted image.
+                mLayoutSelfie.setVisibility(View.VISIBLE);
+            }
 
-        if (KYCManager.getInstance().isFacialRecognition()) {
-            if (KYCManager.getInstance().getFaceLivenessMode().equals(KYCManager.LIVENESS_ENHANCED)) {
+            // Update status header + icon.
+            if (result.getDocument().getInterpretedResult().toLowerCase().equals("success")) {
+                mTvResultHeader.setVisibility(View.GONE);
+                mLayoutCheckDoc.setVisibility(View.VISIBLE);
+            }
+            else {
+                String docRes = getString(R.string.fragment_kyc_doc_status) + " " + result.getDocument().getInterpretedResult();
+                mTvResultHeader.setText(docRes);
+            }
+
+            mIvResultIcon.setVisibility(View.GONE);
+
+            // -------------
+            // Update checks
+            // -------------
+
+            if (KYCManager.getInstance().isFacialRecognition()) {
                 mLayoutCheckEPL.setVisibility(View.VISIBLE);
                 if (result.getEnhancedLiveness().getScore() < 80) {
                     ((ImageView)mRetValue.findViewById(R.id.fragment_kyc_overview_icon_check_epl)).setImageResource(R.drawable.error);
                 }
-            }
 
-            mLayoutCheckFace.setVisibility(View.VISIBLE);
-            if (result.getFace().getResult().equals("FACE_NOT_MATCH")) {
-                ((ImageView)mRetValue.findViewById(R.id.fragment_kyc_overview_icon_check_face)).setImageResource(R.drawable.error);
-            }
-        }
-
-        // Alerts
-        mLayoutUserInfo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (  (result.getDocument().getFailedVerifications() != null)
-                    &&(result.getDocument().getFailedVerifications().size() > 0)
-                   ){
-                    String alertNb = getString(R.string.fragment_kyc_alerts);
-                    String alerts = "";
-                    List<KYCFailedVerification> kycAlerts = result.getDocument().getFailedVerifications();
-
-                    alertNb += ": " + result.getDocument().getFailedVerifications().size();
-
-
-                    for (int i = 0; i < result.getDocument().getFailedVerifications().size(); i++) {
-                        KYCFailedVerification alert = kycAlerts.get(i);
-
-                        alerts += "\n" + alert.getName();
-                    }
-
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                    builder.setTitle(alertNb);
-                    builder.setIcon(R.drawable.error);
-                    builder.setMessage(alerts);
-                    builder.setPositiveButton("Ok", null);
-                    builder.show();
+                mLayoutCheckFace.setVisibility(View.VISIBLE);
+                if (result.getFace().getResult().equals("FACE_NOT_MATCH")) {
+                    ((ImageView)mRetValue.findViewById(R.id.fragment_kyc_overview_icon_check_face)).setImageResource(R.drawable.error);
                 }
             }
-        });
 
-        // Update button function
-        mButtonNext.setText(R.string.fragment_kyc_overview_button_done);
-        mButtonNext.setOnClickListener(view -> onButtonClickDone());
+            // Alerts
+            mLayoutUserInfo.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (  (result.getDocument().getFailedVerifications() != null)
+                        &&(result.getDocument().getFailedVerifications().size() > 0)
+                       ){
+                        String alertNb = getString(R.string.fragment_kyc_alerts);
+                        String alerts = "";
+                        List<KYCFailedVerification> kycAlerts = result.getDocument().getFailedVerifications();
+
+                        alertNb += ": " + result.getDocument().getFailedVerifications().size();
+
+
+                        for (int i = 0; i < result.getDocument().getFailedVerifications().size(); i++) {
+                            KYCFailedVerification alert = kycAlerts.get(i);
+
+                            alerts += "\n" + alert.getName();
+                        }
+
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                        builder.setTitle(alertNb);
+                        builder.setIcon(R.drawable.error);
+                        builder.setMessage(alerts);
+                        builder.setPositiveButton("Ok", null);
+                        builder.show();
+                    }
+                }
+            });
+
+            // Update button function
+            mButtonNext.setVisibility(View.VISIBLE);
+            mButtonNext.setText(R.string.fragment_kyc_overview_button_done);
+            mButtonNext.setOnClickListener(view -> onButtonClickDone());
+        }
     }
 
     /**
@@ -373,11 +716,14 @@ public class FragmentKycOverview extends AbstractFragmentBase {
     private void displayError(final String error, final KYCResponse response, int retryStep) {
         // Append detail information about failed check if available.
         final StringBuilder fullErr = new StringBuilder(error);
-        if (response != null && !response.getDocument().getFailedVerifications().isEmpty()) {
+
+        if (response != null && response.getDocument() != null && !response.getDocument().getFailedVerifications().isEmpty()) {
             fullErr.append('\n');
+
             for (final KYCFailedVerification loopVerify : response.getDocument().getFailedVerifications()) {
                 fullErr.append(loopVerify.getName()).append(", ");
             }
+
             fullErr.delete(fullErr.length() - 2, fullErr.length());
         }
 
@@ -387,10 +733,12 @@ public class FragmentKycOverview extends AbstractFragmentBase {
         mRetryStep = retryStep;
 
         if ((mRetryStep == KYCSession.RETRY_DOC_SCAN) || (mRetryStep == KYCSession.RETRY_SELFIE_SCAN)) {
+            mButtonNext.setVisibility(View.VISIBLE);
             mButtonNext.setText(getString(R.string.button_retry));
             mButtonNext.setOnClickListener(view -> onButtonClickRetry());
         }
         else if (mRetryStep == KYCSession.RETRY_ABORT) {
+            mButtonNext.setVisibility(View.VISIBLE);
             mButtonNext.setText(getString(R.string.button_abort));
             mButtonNext.setOnClickListener(view -> onButtonClickAbort());
         }
@@ -400,52 +748,6 @@ public class FragmentKycOverview extends AbstractFragmentBase {
 
 
     //region User Interface
-
-    /**
-     * On click listener for the done button.
-     */
-    private void onButtonClickSubmit() {
-        // Show loading progress bar during asynchronous operation.
-        getMainActivity().progressBarShow();
-        mIvResultIcon.setVisibility(View.VISIBLE);
-
-        // Send data to server and wait for response.
-        mKYCCommunication = DataContainer.instance().mKYCCommunication;
-
-        mKYCCommunication.verifyDocument(new KYCSession.KYCResponseHandler() {
-                                             @Override
-                                             public void onSuccess(final KYCResponse response) {
-                                                 // Operation finished. We can hide progress bar.
-                                                 getMainActivity().progressBarHide();
-                                                 // Update UI with values from response.
-                                                 displayResult(response);
-                                             }
-
-                                             @Override
-                                             public void onFailure(final String error) {
-                                                 // Operation finished. We can hide progress bar.
-                                                 getMainActivity().progressBarHide();
-                                                 // Display issue description.
-                                                 displayError(error, null, KYCSession.RETRY_NONE);
-                                             }
-
-                                             @Override
-                                             public void onFailureRetry(final String error, int retryStep) {
-                                                 // Operation finished. We can hide progress bar.
-                                                 getMainActivity().progressBarHide();
-                                                 // Display issue description.
-                                                 displayError(error + "\n" + getString(R.string.try_again), null, retryStep);
-                                             }
-
-                                             @Override
-                                             public void onFailureAbort(final String error) {
-                                                 // Operation finished. We can hide progress bar.
-                                                 getMainActivity().progressBarHide();
-                                                 // Display issue description.
-                                                 displayError(error, null, KYCSession.RETRY_ABORT);
-                                             }
-                                         }, DataContainer.instance().mVerificationStep);
-    }
 
     /**
      * On click listener for the done button.
@@ -466,10 +768,8 @@ public class FragmentKycOverview extends AbstractFragmentBase {
             return;
         }
         else if (mRetryStep == KYCSession.RETRY_DOC_SCAN) {
-            DataContainer.instance().mVerificationStep = KYCCommunication.STEP_START_VERIFICATION;
-            getMainActivity().getSupportFragmentManager().popBackStack();
-            getMainActivity().getSupportFragmentManager().popBackStack();
-            getMainActivity().getSupportFragmentManager().popBackStack();
+            DataContainer.instance().mVerificationStep = KYCCommunication.STEP_START_DOC_VERIFICATION;
+            getMainActivity().getSupportFragmentManager().popBackStack(1, FragmentManager.POP_BACK_STACK_INCLUSIVE);
 
             return;
         }
@@ -479,7 +779,7 @@ public class FragmentKycOverview extends AbstractFragmentBase {
      * On click listener for the abort button.
      */
     private void onButtonClickAbort() {
-        DataContainer.instance().mVerificationStep = KYCCommunication.STEP_START_VERIFICATION;
+        DataContainer.instance().mVerificationStep = KYCCommunication.STEP_START_DOC_VERIFICATION;
         getMainActivity().getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
 

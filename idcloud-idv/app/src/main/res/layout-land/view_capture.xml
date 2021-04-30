@@ -67,12 +67,28 @@
                 />
 
             <!--Capture Frame-->
-            <ImageView
+            <RelativeLayout
                 android:id="@+id/capture_frame"
                 android:layout_width="150dp"
                 android:layout_height="150dp"
                 android:layout_gravity="center"
-                android:src="@drawable/rectangle_blue"/>
+                android:visibility="invisible"
+                >
+                <ImageView
+                    android:id="@+id/capture_frame_doc"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:src="@drawable/rectangle_blue"/>
+                <ImageView
+                    android:id="@+id/capture_frame_mrz"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginBottom="70dp"
+                    android:src="@drawable/line_blue"/>
+            </RelativeLayout>
 
             <!--Quality checks-->
             <RelativeLayout

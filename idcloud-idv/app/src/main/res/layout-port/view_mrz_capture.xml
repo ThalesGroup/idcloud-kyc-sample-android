@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Main layout divider. Side menu with steps + actual capture-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:ignore="MissingDefaultResource">
+
+    <!--Side menu with steps-->
+    <LinearLayout
+        android:id="@+id/mrz_view_capture_tutorial_layout"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:background="@android:color/black"
+        android:gravity="center"
+        android:orientation="horizontal">
+        <include layout="@layout/view_document_step"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+
+    <!--Extra frame to handle SDK camera layout. SDK is hiding whole frame in some cases.-->
+    <!--But we still need this frame for other parts.-->
+    <FrameLayout
+        android:id="@+id/mrz_view_capture_preview_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/black">
+
+        <!--Camera preview + transparent overlay-->
+        <FrameLayout
+            android:id="@+id/mrz_camera_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/background_camera_view"
+            android:visibility="visible">
+
+            <TextureView
+                android:id="@+id/mrz_camera"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center" />
+
+            <com.thalesgroup.kyc.idv.gui.view.DrawMrzOverlayView
+                android:id="@+id/mrz_draw_overlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!--Capture Frame-->
+            <RelativeLayout
+                android:id="@+id/mrz_capture_frame"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_gravity="center"
+                android:visibility="invisible"
+                >
+                <ImageView
+                    android:id="@+id/capture_frame_doc"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:src="@drawable/rectangle_blue"/>
+                <ImageView
+                    android:id="@+id/capture_frame_mrz"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginBottom="70dp"
+                    android:src="@drawable/line_blue"/>
+            </RelativeLayout>
+        </FrameLayout> <!--Camera preview + transparent overlay-->
+    </FrameLayout> <!--Extra frame-->
+</LinearLayout>  <!--Main layout divider. Side menu with steps + actual capture-->

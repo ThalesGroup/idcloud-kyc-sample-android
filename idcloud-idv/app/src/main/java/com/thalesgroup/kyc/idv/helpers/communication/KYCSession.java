@@ -51,6 +51,16 @@ public class KYCSession {
      */
     public interface KYCResponseHandler {
         /**
+         * Progress callback.
+         *
+         * @param nbSteps Number of steps.
+         * @param stepNb Current step number.
+         * @param response Response from verification server.
+         *
+         */
+        void onProgress(final int nbSteps, final int stepNb, final KYCResponse response);
+
+        /**
          * Success callback.
          *
          * @param response Response from verification server.
@@ -226,6 +236,16 @@ public class KYCSession {
         // Call handler in UI thread.
         if (mHandler != null) {
             new Handler(Looper.getMainLooper()).post(() -> mHandler.onSuccess(response));
+        }
+    }
+
+    /**
+     * Calls the progress handler.
+     */
+    synchronized void handleProgress(int nbSteps, int stepNb, final KYCResponse response) {
+        // Call handler in UI thread.
+        if (mHandler != null) {
+            new Handler(Looper.getMainLooper()).post(() -> mHandler.onProgress(nbSteps, stepNb, response));
         }
     }
 

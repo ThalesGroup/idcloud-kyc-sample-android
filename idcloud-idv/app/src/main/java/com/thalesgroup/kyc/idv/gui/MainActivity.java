@@ -29,6 +29,7 @@ package com.thalesgroup.kyc.idv.gui;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.MenuItem;
@@ -42,15 +43,21 @@ import android.widget.Toast;
 import com.google.android.material.navigation.NavigationView;
 import com.thalesgroup.kyc.idv.R;
 import com.thalesgroup.kyc.idv.gui.activity.ActivityCaptureDocIDVLandscape;
+import com.thalesgroup.kyc.idv.gui.activity.ActivityCaptureDocIDVPortrait;
+import com.thalesgroup.kyc.idv.gui.activity.ActivityCaptureMrzIDVLandscape;
+import com.thalesgroup.kyc.idv.gui.activity.ActivityCaptureMrzIDVPortrait;
 import com.thalesgroup.kyc.idv.gui.activity.AwareLivenessActivity;
 import com.thalesgroup.kyc.idv.gui.fragment.FragmentFaceIdTutorial;
 import com.thalesgroup.kyc.idv.gui.fragment.FragmentHome;
 import com.thalesgroup.kyc.idv.gui.fragment.FragmentKycOverview;
 import com.thalesgroup.kyc.idv.gui.fragment.FragmentMissingPermissions;
+import com.thalesgroup.kyc.idv.gui.fragment.FragmentResultMrz;
 import com.thalesgroup.kyc.idv.helpers.AbstractOption;
 import com.thalesgroup.kyc.idv.helpers.KYCManager;
 import com.thalesgroup.kyc.idv.helpers.OptionAdapter;
 import com.thalesgroup.kyc.idv.helpers.PermissionManager;
+import com.thalesgroup.kyc.idv.helpers.communication.KYCCommScheduler;
+import com.thalesgroup.kyc.idv.helpers.communication.KYCCommunication;
 
 import java.util.List;
 
@@ -62,14 +69,14 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
-
     //region Definition
 
     public static final int ANIM_DURATION_SLOW_MS = 1500;
     public static final String BUNDLE_ARGUMENT_DOC_TYPE = "doc_type";
 
-    private static final int REQUEST_ID_DOC_SCAN = 1;
-    private static final int REQUEST_ID_FACE_SCAN = 2;
+    private static final int REQUEST_ID_MRZ_SCAN = 1;
+    private static final int REQUEST_ID_DOC_SCAN = 2;
+    private static final int REQUEST_ID_FACE_SCAN = 3;
 
     public static final int CAPTURE_RETURN_CODE_OK = 1;
     public static final int CAPTURE_RETURN_CODE_ERR = 2;
@@ -121,7 +128,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                  final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_ID_DOC_SCAN) {
+        if (requestCode == REQUEST_ID_MRZ_SCAN) {
+            onActivityResultMRZ(resultCode, data);
+        } else if (requestCode == REQUEST_ID_DOC_SCAN) {
             onActivityResultDocument(resultCode, data);
         } else if (requestCode == REQUEST_ID_FACE_SCAN) {
             onActivityResultFace(resultCode, data);
@@ -168,8 +177,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         displayFragment(new FragmentHome(), false, false);
     }
 
-    private void onActivityResultDocument(final int resultCode, final Intent data) {
+    private void onActivityResultMRZ(final int resultCode, final Intent data) {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
         if (resultCode == CAPTURE_RETURN_CODE_OK) {
+            displayFragment(new FragmentResultMrz(), true, true);
+        } else if (resultCode == CAPTURE_RETURN_CODE_ERR) {
+            final int errCode = data.getIntExtra(CAPTURE_EXTRA_ERROR_CORE, -1);
+            Toast.makeText(MainActivity.this, "MRZ capture failed. Error code: " + errCode, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void onActivityResultDocument(final int resultCode, final Intent data) {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        if (resultCode == CAPTURE_RETURN_CODE_OK) {
+            KYCCommScheduler.sendData(KYCCommunication.STEP_START_DOC_VERIFICATION);
+
             if (KYCManager.getInstance().isFacialRecognition()) {
                 displayFragment(new FragmentFaceIdTutorial(), true, true);
             } else {
@@ -240,13 +264,34 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return PermissionManager.checkPermissions(this,
                                                   askForThem,
                                                   Manifest.permission.CAMERA,
-                                                  Manifest.permission.INTERNET
+                                                  Manifest.permission.INTERNET,
+                                                  Manifest.permission.NFC
                                                   );
+    }
+
+    public void openMrzScanActivity(final AbstractOption.DocumentType docType) {
+        Intent intent = null;
+
+        if (KYCManager.getInstance().isPortraitScan()) {
+            intent = new Intent(MainActivity.this, ActivityCaptureMrzIDVPortrait.class);
+        }
+        else {
+            intent = new Intent(MainActivity.this, ActivityCaptureMrzIDVLandscape.class);
+        }
+
+        intent.putExtra(MainActivity.BUNDLE_ARGUMENT_DOC_TYPE, docType);
+         startActivityForResult(intent, REQUEST_ID_MRZ_SCAN);
     }
 
     public void openDocScanActivity(final AbstractOption.DocumentType docType) {
         Intent intent = null;
-        intent = new Intent(MainActivity.this, ActivityCaptureDocIDVLandscape.class);
+
+        if (KYCManager.getInstance().isPortraitScan()) {
+            intent = new Intent(MainActivity.this, ActivityCaptureDocIDVPortrait.class);
+        }
+        else {
+            intent = new Intent(MainActivity.this, ActivityCaptureDocIDVLandscape.class);
+        }
 
         intent.putExtra(MainActivity.BUNDLE_ARGUMENT_DOC_TYPE, docType);
         startActivityForResult(intent, REQUEST_ID_DOC_SCAN);

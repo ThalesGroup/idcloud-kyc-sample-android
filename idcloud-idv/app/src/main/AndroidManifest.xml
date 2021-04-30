@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.NFC" />
+
+    <uses-feature android:name="android.hardware.nfc" android:required="true" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -36,14 +40,40 @@
         </activity>
 
         <activity
+            android:name="com.thalesgroup.kyc.idv.gui.activity.ActivityCaptureMrzIDVLandscape"
+            android:theme="@style/AppTheme"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.thalesgroup.kyc.idv.gui.activity.ActivityCaptureMrzIDVPortrait"
+            android:theme="@style/AppTheme"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name="com.thalesgroup.kyc.idv.gui.activity.ActivityCaptureDocIDVLandscape"
             android:theme="@style/AppTheme"
-            android:screenOrientation="landscape" />
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name="com.thalesgroup.kyc.idv.gui.activity.ActivityCaptureDocIDVPortrait"
             android:theme="@style/AppTheme"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name="com.thalesgroup.kyc.idv.gui.activity.AwareLivenessActivity"

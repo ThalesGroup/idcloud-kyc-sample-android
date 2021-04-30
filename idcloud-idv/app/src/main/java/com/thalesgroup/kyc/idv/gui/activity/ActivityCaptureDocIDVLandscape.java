@@ -27,7 +27,11 @@
 
 package com.thalesgroup.kyc.idv.gui.activity;
 
+import android.content.pm.ActivityInfo;
 import android.graphics.Point;
+import android.os.Build;
+import android.os.Bundle;
+import android.view.View;
 import android.view.ViewGroup;
 
 import com.thalesgroup.kyc.idv.helpers.AbstractOption;
@@ -57,6 +61,37 @@ public class ActivityCaptureDocIDVLandscape extends AbstractActivityCaptureDocID
         final ViewGroup.LayoutParams params = mCaptureFrame.getLayoutParams();
         params.width = (int) ((double) size.y * percentage * ratio);
         params.height = (int) ((double) size.y * percentage);
+
+        mCaptureFrameMrz.setVisibility(mDocumentType == AbstractOption.DocumentType.IdCard ? View.INVISIBLE : View.VISIBLE);
+
+        final ViewGroup.MarginLayoutParams paramsMargin = (ViewGroup.MarginLayoutParams)mCaptureFrameMrz.getLayoutParams();
+        paramsMargin.bottomMargin = (int)(params.height / 3.8f);
+        mCaptureFrameMrz.setLayoutParams(paramsMargin);
+    }
+
+    @Override
+    public void onCreate(final Bundle savedInstanceState){
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onPause(){
+        if (android.os.Build.VERSION.SDK_INT == Build.VERSION_CODES.O_MR1) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+        }
+
+        super.onPause();
+    }
+
+    @Override
+    public void onResume(){
+        if (android.os.Build.VERSION.SDK_INT == Build.VERSION_CODES.O_MR1) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        }
+
+        super.onResume();
     }
 
     //endregion

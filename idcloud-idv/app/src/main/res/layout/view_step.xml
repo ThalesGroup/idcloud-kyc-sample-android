@@ -43,7 +43,7 @@
         android:layout_gravity="center"
         android:gravity="start"
         android:textColor="@color/colorTextPrimary"
-        android:text="@string/STRING_KYC_FIRST_STEP_ID"
+        android:text="@string/STRING_KYC_ONBOARDING_STEPS_ID"
         android:textSize="@dimen/dimensionTextSizeNormal"/>
 
 </LinearLayout>

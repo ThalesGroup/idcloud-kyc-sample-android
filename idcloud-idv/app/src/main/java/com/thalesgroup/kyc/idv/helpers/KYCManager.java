@@ -36,8 +36,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.auth0.android.jwt.JWT;
-import com.thalesgroup.idv.sdk.doc.api.CaptureSDK;
 import com.thalesgroup.idv.sdk.doc.api.Configuration;
 import com.thalesgroup.kyc.idv.BuildConfig;
 import com.thalesgroup.kyc.idv.R;
@@ -73,7 +71,10 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
     private final static String SHARED_PREF_KEY = "KYCOptions";
 
     // GeneralSettings
-    private final static String KEY_FACIAL_RECOGNITION = "KycPreferenceKeyFacalRecognition";
+    private final static String KEY_NEW_UI_MODE = "KycPreferenceKeyNewUiMode";
+    private final static String KEY_DOC_TYPE = "KycPreferenceKeyDocumentType";
+    private final static String KEY_FACIAL_RECOGNITION = "KycPreferenceKeyFacialRecognition";
+    private final static String KEY_NFC_MODE = "KycPreferenceKeyNfcMode";
     private final static String KEY_BASIC_CREDENTIALS = "KycPreferenceKeyBasicCredentials";
     private final static String KEY_BASE_URL = "KycPreferenceKeyBaseUrl";
     private final static String KEY_KYC_QR_CODE_VERSION = "KycPreferenceKeyVersion";
@@ -81,7 +82,10 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
     public final static String KYC_QR_CODE_VERSION_KYC2 = "kyc2";
 
     // DocumentScan
+    private final static String KEY_SMART_MODE = "KycPreferenceKeySmartMode";
     private final static String KEY_MANUAL_SCAN = "KycPreferenceKeyManualScan";
+    private final static String KEY_PORTRAIT_SCAN = "KycPreferenceKeyPortraitScan";
+
     private final static String KEY_EDGE_MODE = "KycPreferenceKeyEdgeMode";
     private final static String KEY_BLUR_QC = "KycPreferenceKeyEnabledBlurQC";
     private final static String KEY_GLARE_QC = "KycPreferenceKeyEnabledGlareQC";
@@ -90,6 +94,13 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
 
     // FaceId
     private final static String KEY_FACE_LIVENESS_MODE = "KycPreferenceKeyLivenessMode";
+
+    // MRZ & NFC
+    private final static String KEY_SKIP_MRZ = "DebugKycPreferenceKeySkipMrz"; // Debug option
+    private final static String KEY_LAST_MRZ = "DebugKycPreferenceKeyLastMrz"; // Debug option
+    private final static String KEY_DISPLAY_MRZ_AREA = "DebugKycPreferenceKeyMrzArea";
+    private final static String KEY_DISPLAY_MRZ_DATA = "DebugKycPreferenceKeyMrzData";
+    private final static String KEY_NFC_SOUND = "DebugKycPreferenceKeyNfcSound";
 
     //endregion
 
@@ -135,7 +146,15 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
 
                 new AbstractOption.Version(AbstractOption.OptionSection.Version,
                         mContext.getString(R.string.STRING_KYC_OPTION_VERSION_DOC_SDK),
-                        CaptureSDK.version),
+                        com.thalesgroup.idv.sdk.doc.api.CaptureSDK.version),
+
+                new AbstractOption.Version(AbstractOption.OptionSection.Version,
+                        mContext.getString(R.string.STRING_KYC_OPTION_VERSION_MRZ_SDK),
+                        com.thalesgroup.idv.sdk.mrz.api.CaptureSDK.version),
+
+                new AbstractOption.Version(AbstractOption.OptionSection.Version,
+                        mContext.getString(R.string.STRING_KYC_OPTION_VERSION_NFC_SDK),
+                        com.thalesgroup.idv.sdk.nfc.CaptureSDK.version),
 
                 new AbstractOption.Version(AbstractOption.OptionSection.Version,
                         mContext.getString(R.string.STRING_KYC_OPTION_VERSION_LIVENESS),
@@ -156,19 +175,6 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
         ));
     }
 
-    private List<AbstractOption> createGeneralSettings() {
-        return new ArrayList<>(Arrays.asList(
-                new AbstractOption.SectionHeader(AbstractOption.OptionSection.General,
-                        mContext.getString(R.string.STRING_KYC_OPTION_SECTION_GENERAL)),
-
-                new AbstractOption.Checkbox(AbstractOption.OptionSection.General,
-                        mContext.getString(R.string.STRING_KYC_OPTION_FACE_REC_CAP),
-                        mContext.getString(R.string.STRING_KYC_OPTION_FACE_REC_DES),
-                        this::isFacialRecognition,
-                        this::setFacialRecognition)
-        ));
-    }
-
     private List<AbstractOption> createDocumentScanSettings() {
         return new ArrayList<>(Arrays.asList(
                 new AbstractOption.SectionHeader(AbstractOption.OptionSection.DocumentScan,
@@ -178,7 +184,13 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
                         mContext.getString(R.string.STRING_KYC_OPTION_MANUAL_MODE_CAP),
                         mContext.getString(R.string.STRING_KYC_OPTION_MANUAL_MODE_DES),
                         this::isManualScan,
-                        this::setManualScan)
+                        this::setManualScan),
+
+                new AbstractOption.Checkbox(AbstractOption.OptionSection.DocumentScan,
+                        mContext.getString(R.string.STRING_KYC_OPTION_PORTRAIT_MODE_CAP),
+                        mContext.getString(R.string.STRING_KYC_OPTION_PORTRAIT_MODE_DES),
+                        this::isPortraitScan,
+                        this::setPortraitScan)
         ));
     }
 
@@ -224,6 +236,32 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
         ));
     }
 
+    private List<AbstractOption> createDocumenNfcSettings() {
+        return new ArrayList<>(Arrays.asList(
+                new AbstractOption.SectionHeader(AbstractOption.OptionSection.DocumentChip,
+                        mContext.getString(R.string.STRING_KYC_OPTION_SECTION_NFC)),
+
+                new AbstractOption.Checkbox(AbstractOption.OptionSection.DocumentChip,
+                        mContext.getString(R.string.STRING_KYC_OPTION_MRZ_AREA_CAP),
+                        mContext.getString(R.string.STRING_KYC_OPTION_MRZ_AREA_DES),
+                        this::isDisplayMrzArea,
+                        this::setDisplayMrzArea),
+
+                new AbstractOption.Checkbox(AbstractOption.OptionSection.DocumentChip,
+                        mContext.getString(R.string.STRING_KYC_OPTION_MRZ_DATA_CAP),
+                        mContext.getString(R.string.STRING_KYC_OPTION_MRZ_DATA_DES),
+                        this::isDisplayMrzData,
+                        this::setDisplayMrzData),
+
+                new AbstractOption.Checkbox(AbstractOption.OptionSection.DocumentChip,
+                        mContext.getString(R.string.STRING_KYC_OPTION_NFC_SOUND_CAP),
+                        mContext.getString(R.string.STRING_KYC_OPTION_NFC_SOUND_DES),
+                        this::isNfcSound,
+                        this::setNfcSound)
+        ));
+    }
+
+
     private boolean setValue(final String key, final int value) {
         mPreferences.edit().putInt(key, value).apply();
         return true;
@@ -264,15 +302,6 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
         return mPreferences.getBoolean(key, defaultValue);
     }
 
-    private String getJWTExpiration(final String token) {
-        try {
-            final JWT jwt = new JWT(token);
-            return jwt.getExpiresAt() != null ? jwt.getExpiresAt().toString() : null;
-        } catch (final Exception exception) {
-            return null;
-        }
-    }
-
     //endregion
 
 
@@ -299,8 +328,8 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
      */
     public List<AbstractOption> getOptions() {
         final ArrayList<AbstractOption> menuItems = new ArrayList<>();
-        menuItems.addAll(createGeneralSettings());
-         menuItems.addAll(createDocumentScanSettings());
+        menuItems.addAll(createDocumenNfcSettings());
+        menuItems.addAll(createDocumentScanSettings());
         menuItems.addAll(createDocumentScanConfigurationSettings());
         menuItems.addAll(createVersionSettings());
 
@@ -341,21 +370,26 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
 
     //region Props - GeneralSettings
 
-    /**
-     * Sets the facial recognition.
-     *
-     * @param value Value for facial recognition.
-     * @return {@code True} if value stored successfully, else {@code false}.
-     */
+    public boolean setDocType(final AbstractOption.DocumentType value) {
+        return setValue(KEY_DOC_TYPE, value.getValue());
+    }
+
+    public AbstractOption.DocumentType getDocType() {
+        return AbstractOption.DocumentType.fromId(getValueInt(KEY_DOC_TYPE, AbstractOption.DocumentType.Passport.getValue()));
+    }
+
+    public boolean setNfcMode(final boolean value) {
+        return setValue(KEY_NFC_MODE, value);
+    }
+
+    public boolean isNfcMode() {
+        return getValueBoolean(KEY_NFC_MODE, true);
+    }
+
     public boolean setFacialRecognition(final boolean value) {
         return setValue(KEY_FACIAL_RECOGNITION, value);
     }
 
-    /**
-     * Retrieves if facial recognition is set.
-     *
-     * @return {@code True} if facial recognition is set, else {@code false}.
-     */
     public boolean isFacialRecognition() {
         return getValueBoolean(KEY_FACIAL_RECOGNITION, true);
     }
@@ -445,7 +479,7 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
     }
 
     public boolean isEnabledBwQC() {
-        return getValueBoolean(KEY_BW_QC, true);
+        return getValueBoolean(KEY_BW_QC, false);
     }
     //endregion
 
@@ -460,18 +494,41 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
         return getValueBoolean(KEY_MANUAL_SCAN, false);
     }
 
+    public boolean setPortraitScan(final boolean value) {
+        return setValue(KEY_PORTRAIT_SCAN, value);
+    }
+
+    public boolean isPortraitScan() {
+        return getValueBoolean(KEY_PORTRAIT_SCAN, false);
+    }
+
     //endregion
 
     // region Props - FaceId
 
-    public boolean setFaceLivenessMode(final String value) {
-        return setValue(KEY_FACE_LIVENESS_MODE, value);
+    // Chip Options
+    public boolean isDisplayMrzArea() {
+        return getValueBoolean(KEY_DISPLAY_MRZ_AREA, false);
     }
 
-    public String getFaceLivenessMode() {
-        return isFacialRecognition() ?
-                getValueString(KEY_FACE_LIVENESS_MODE, LIVENESS_ENHANCED)
-                : LIVENESS_NO;
+    public boolean setDisplayMrzArea(final boolean value) {
+        return setValue(KEY_DISPLAY_MRZ_AREA, value);
+    }
+
+    public boolean isDisplayMrzData() {
+        return getValueBoolean(KEY_DISPLAY_MRZ_DATA, true);
+    }
+
+    public boolean setDisplayMrzData(final boolean value) {
+        return setValue(KEY_DISPLAY_MRZ_DATA, value);
+    }
+
+    public boolean isNfcSound() {
+        return getValueBoolean(KEY_NFC_SOUND, true);
+    }
+
+    public boolean setNfcSound(final boolean value) {
+        return setValue(KEY_NFC_SOUND, value);
     }
 
     //endregion

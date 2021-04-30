@@ -32,7 +32,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.widget.ImageView;
+
+import com.thalesgroup.kyc.idv.R;
 
 import java.io.IOException;
 
@@ -52,6 +57,11 @@ public class AssetHelper {
     public static final String ASSET_DOC_STEP_ID_CARD_BACK_FLIPPED = "kyc_doc_step_id_card_back_flipped.png";
     public static final String ASSET_DOC_STEP_PASSPORT = "kyc_doc_step_passport.png";
 
+    public static final String ASSET_DOC_MRZ = "kyc_doc_mrz.png";
+
+    public static final int SOUND_NFC_START = R.raw.start;
+    public static final int SOUND_NFC_END = R.raw.end;
+    public static final int SOUND_NFC_ERROR = R.raw.error;
     //endregion
 
     //region Public API
@@ -89,6 +99,13 @@ public class AssetHelper {
             }
         }
     }
+
+    public static void playSound(final int soundId, final Context context) {
+        Uri notification = Uri.parse("android.resource://" + context.getPackageName() + "/" +soundId);
+        Ringtone r = RingtoneManager.getRingtone(context, notification);
+        r.play();
+    }
+
 
     //endregion
 }

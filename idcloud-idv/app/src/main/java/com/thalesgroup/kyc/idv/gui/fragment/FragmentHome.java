@@ -96,7 +96,7 @@ public class FragmentHome extends AbstractFragmentBase {
      */
     private void onButtonClickNext() {
         if (KYCManager.getInstance().getBaseCredentials() != null) {
-            getMainActivity().displayFragment(new FragmentFirstStep(), true, true);
+            getMainActivity().displayFragment(new FragmentOnboarding(), true, true);
         } else {
             KYCManager.getInstance().displayQRcodeScannerForInit();
         }

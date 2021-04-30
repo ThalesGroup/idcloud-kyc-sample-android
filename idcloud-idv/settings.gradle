@@ -1,2 +1,2 @@
-include ':app', ':idcloudstyle'
+include ':app', ':idcloudstyle', ':Aware', ':IDV_DOC', ':IDV_MRZ', ':IDV_NFC'
 rootProject.name='KYC'

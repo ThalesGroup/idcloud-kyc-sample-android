@@ -63,9 +63,11 @@ public abstract class AbstractOption {
         }
 
     enum OptionSection {
+        UI,
         General,
         DocumentScan,
         DocumentConfig,
+        DocumentChip,
         Version
     }
 

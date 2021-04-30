@@ -1,0 +1,5 @@
+configurations.maybeCreate("default")
+artifacts.add("default", file('./IDV_NFC.aar'))
+
+task clean(type: Delete) {
+}

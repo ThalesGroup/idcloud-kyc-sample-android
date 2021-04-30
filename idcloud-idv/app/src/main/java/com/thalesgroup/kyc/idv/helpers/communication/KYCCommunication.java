@@ -27,8 +27,11 @@
 
 package com.thalesgroup.kyc.idv.helpers.communication;
 
+import android.util.Base64;
 import android.util.Log;
 
+import com.aware.face_liveness.yy.c;
+import com.thalesgroup.idv.sdk.nfc.CaptureResult;
 import com.thalesgroup.kyc.idv.BuildConfig;
 import com.thalesgroup.kyc.idv.helpers.DataContainer;
 import com.thalesgroup.kyc.idv.helpers.KYCConfiguration;
@@ -57,10 +60,8 @@ import static com.thalesgroup.kyc.idv.helpers.KYCManager.KYC_QR_CODE_VERSION_KYC
  */
 public class KYCCommunication {
     //region Definition
-    public static final int STEP_START_VERIFICATION = 0;
-    public static final int STEP_DOC_FRONT_VERIFICATION = 1;
-    public static final int STEP_DOC_BACK_VERIFICATION = 2;
-    public static final int STEP_SELFIE_VERIFICATION = 3;
+    public static final int STEP_START_DOC_VERIFICATION = 1;
+    public static final int STEP_SELFIE_VERIFICATION = 2;
 
     private static final String STATE_WAITING = "Waiting";
     private static final String STATE_FINISHED = "Finished";
@@ -70,6 +71,7 @@ public class KYCCommunication {
 
     private static KYCSession mSession;
     private static int mCurrentStep = 1;
+    private static boolean mIsIncremental = false;
 
     /**
      * Response callback.
@@ -95,21 +97,35 @@ public class KYCCommunication {
      * @param handler  Callback.
      * @param startStep  Step to start scenario.
      */
-    public void verifyDocument(final KYCSession.KYCResponseHandler handler, int startStep) {
+    public void verifyDocument(final KYCSession.KYCResponseHandler handler, boolean isIncremental, int startStep) {
+        mIsIncremental = isIncremental;
+
         // Prepare session.
-        if (  (startStep == STEP_START_VERIFICATION)
-            ||(startStep == STEP_DOC_FRONT_VERIFICATION)
-            ||(startStep == STEP_DOC_BACK_VERIFICATION)
-           ){
+        if (startStep == STEP_START_DOC_VERIFICATION) {
             mSession = new KYCSession(KYCManager.getInstance().getBaseUrl(), handler);
+
             // IDV mode
             if (!KYCManager.getInstance().isFacialRecognition()) {
-                idv_verifyDocument();
+                // NFC mode
+                if (KYCManager.getInstance().isNfcMode()) {
+                    idv_verifyNfc();
+                }
+                // OCR mode
+                else {
+                    idv_verifyDocument();
+                }
             }
 
             // Aware mode
             else {
-                aware_verifyDocument();
+                // NFC mode
+                if (KYCManager.getInstance().isNfcMode()) {
+                    idv_verifyNfc();
+                }
+                // OCR mode
+                else {
+                    aware_verifyDocument();
+                }
             }
         }
         else if (startStep == STEP_SELFIE_VERIFICATION) {
@@ -244,11 +260,6 @@ public class KYCCommunication {
                                 &&(statusCode <= 4604)) {
                                 mSession.handleErrorRetry(KYCManager.getInstance().getErrorMessage(String.valueOf(statusCode), message), KYCSession.RETRY_DOC_SCAN);
                             }
-                            // Specific error management for face verification
-                            else if (  (statusCode >= 4610)
-                                    &&(statusCode <= 4612)) {
-                                mSession.handleErrorRetry(KYCManager.getInstance().getErrorMessage(String.valueOf(statusCode), message), KYCSession.RETRY_SELFIE_SCAN);
-                            }
                             else {
                                 mSession.handleResult(result);
                             }
@@ -263,12 +274,6 @@ public class KYCCommunication {
                                 mSession.handleErrorRetry(KYCManager.getInstance().getErrorMessage(String.valueOf(statusCode), message), KYCSession.RETRY_DOC_SCAN);
                             }
 
-                            // Specific error management for face verification
-                            else if (  (statusCode >= 4610)
-                                    &&(statusCode <= 4612)) {
-                                mSession.handleErrorRetry(KYCManager.getInstance().getErrorMessage(String.valueOf(statusCode), message), KYCSession.RETRY_SELFIE_SCAN);
-                            }
-
                             // Specific error management for unrecognized doc
                             else if (statusCode == 5301) {
                                 mSession.handleErrorRetry(KYCManager.getInstance().getErrorMessage(String.valueOf(statusCode), message), KYCSession.RETRY_DOC_SCAN);
@@ -281,6 +286,158 @@ public class KYCCommunication {
                                                 "\n" + KYCManager.getInstance().getErrorMessage(""+ statusCode, message),
                                         KYCSession.RETRY_DOC_SCAN);
                             }
+                        }
+                    } catch (final JSONException exception) {
+                        mSession.handleErrorAbort(exception.getLocalizedMessage());
+                    } catch (InterruptedException exception) {
+                        mSession.handleErrorAbort(exception.toString());
+                    }
+                } else if (error != null) {
+                    // Direct communication error.
+                    mSession.handleErrorAbort(error);
+                } else {
+                    // Unknown state. Successful communication with empty result.
+                    mSession.handleErrorAbort(KYCManager.getInstance().getErrorMessage("9919", null));
+                }
+            });
+        } catch (final IOException exception) {
+            // Communication / json parsing issue.
+            mSession.handleErrorAbort(exception.getLocalizedMessage());
+        }
+    }
+
+    /**
+     * IDV - Sends the document NFC data to the verification backend for verification.
+     */
+    private void idv_verifyNfc() {
+        mCurrentStep = 1;
+
+        try {
+            // Get connection
+            final HttpURLConnection connection = getUrlConnection(mSession.getBaseUrl());
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+
+            if (BuildConfig.DEBUG) {
+                Log.w("KYC", "URL: " + connection.getURL().toString());
+            }
+
+            // Build post JSON
+            final JSONObject json = idv_createNfcVerificationJSON(DataContainer.instance().mNfcResult);
+
+            // Send request in a new Thread and handle response
+            getConnectionResponse(json, connection, (response, error) -> {
+                // Fragment/Activity which is waiting for the result is already gone, so no need to continue with request.
+                if (!mSession.isListenerRegistered()) {
+                    return;
+                }
+
+                if (response != null) {
+                    try {
+                        // Parse server response and get session id.
+                        final JSONObject res = new JSONObject(response);
+                        final String sessionId = res.getString("id");
+
+                        // Failed to get valid operation session id.
+                        if (sessionId == null || sessionId.isEmpty()) {
+                            mSession.handleError("Failed to get valid session id.");
+                            return;
+                        }
+
+                        // Pass get the session id to current session and continue.
+                        mSession.updateWithSessionId(sessionId);
+                        // Call it directly so we don't have to deal with sync.
+                        idv_pollingNfcResultStep(0);
+                    } catch (final JSONException exception) {
+                        mSession.handleErrorAbort(exception.getLocalizedMessage());
+                    }
+                } else if (error != null) {
+                    // Direct communication error.
+                    mSession.handleErrorAbort(error);
+                } else {
+                    // Unknown state. Successful communication with empty result.
+                    mSession.handleErrorAbort(KYCManager.getInstance().getErrorMessage("9919", null));
+                }
+            });
+
+        } catch (final IOException | JSONException exception) {
+            // Communication / json parsing issue.
+            mSession.handleError(exception.getLocalizedMessage());
+        }
+    }
+
+    /**
+     * IDV - Starts the second verification step (NFC) with the verification backend.
+     */
+    private void idv_pollingNfcResultStep(int counter) {
+        mCurrentStep = 2;
+
+        try {
+            // Get connection
+            final HttpURLConnection connection = getUrlConnection(mSession.getUrlWithSessionId());
+            connection.setRequestMethod("GET");
+
+            if (BuildConfig.DEBUG) {
+                Log.w("KYC", "URL: " + connection.getURL().toString());
+                Log.w("KYC", "Try #" + (counter + 1));
+            }
+
+            // Send request in a new Thread and handle response
+            getConnectionResponse(null, connection, (response, error) -> {
+                // Fragment/Activity which is waiting for the result is already gone, so no need to continue with request.
+                if (!mSession.isListenerRegistered()) {
+                    return;
+                }
+
+                if (response != null) {
+                    try {
+                        // Parse server response and get session id.
+                        final JSONObject res = new JSONObject(response);
+                        final String status = res.getString("status");
+
+                        // Server operation still running.
+                        if (status != null && status.equalsIgnoreCase(STATE_RUNNING)) {
+                            if (counter > KYCConfiguration.IDCLOUD_NUMBER_OF_RETRIES) {
+                                mSession.handleError("Failed to Poll final result, numbers of retries was reached.");
+                            }
+                            else {
+                                Thread.sleep(KYCConfiguration.IDCLOUD_RETRY_DELAY_SEC * 1000);
+
+                                idv_pollingNfcResultStep(counter + 1);
+                            }
+                        }
+                        // Server operation is finished.
+                        else if (status != null && status.equalsIgnoreCase(STATE_FINISHED)) {
+                            final KYCResponse result = new KYCResponse(res.getJSONObject("state").getJSONObject("result"));
+
+                            mSession.handleResult(result);
+                        }
+                        else if (status != null && status.equalsIgnoreCase(STATE_WAITING)) {
+                            JSONObject tmpResponse = res.getJSONObject("state").getJSONObject("result");
+
+                            if (tmpResponse.has("object")) {
+                                final JSONObject object = tmpResponse.getJSONObject("object");
+
+                                // Hack to store intermediate response
+                                if (object.has("chipResult")) {
+                                    DataContainer.instance().mIdvChipResult = object.getJSONObject("chipResult").toString();
+                                }
+                            }
+                            if (!mIsIncremental) {
+                                aware_verifyFaceStep();
+                            }
+                            else {
+                                final KYCResponse result = new KYCResponse(res.getJSONObject("state").getJSONObject("result"));
+                                mSession.handleProgress(2, STEP_SELFIE_VERIFICATION, result);
+                            }
+                        }
+                        else{
+                            final int statusCode = res.getJSONObject("state").getJSONObject("result").getInt("code");
+                            final String message = res.getJSONObject("state").getJSONObject("result").getString("message");
+                            mSession.handleErrorRetry("Status: " + status +
+                                            "\nCode: " + statusCode +
+                                            "\n" + KYCManager.getInstance().getErrorMessage(""+ statusCode, message),
+                                    KYCSession.RETRY_DOC_SCAN);
                         }
                     } catch (final JSONException exception) {
                         mSession.handleErrorAbort(exception.getLocalizedMessage());
@@ -341,6 +498,7 @@ public class KYCCommunication {
 
                         // Pass get the session id to current session and continue.
                         mSession.updateWithSessionId(sessionId);
+
                         // Call it directly so we don't have to deal with sync.
                         aware_pollingDocResultStep(0);
                     } catch (final JSONException exception) {
@@ -410,7 +568,14 @@ public class KYCCommunication {
                             mSession.handleResult(result);
                         }
                         else if (status != null && status.equalsIgnoreCase(STATE_WAITING)) {
-                            aware_verifyFaceStep();
+                            if (!mIsIncremental) {
+                                aware_verifyFaceStep();
+                            }
+                            else {
+                                final KYCResponse result = new KYCResponse(res.getJSONObject("state").getJSONObject("result"));
+
+                                mSession.handleProgress(2, STEP_SELFIE_VERIFICATION, result);
+                            }
                         }
                         else{
                             final int statusCode = res.getJSONObject("state").getJSONObject("result").getInt("code");
@@ -559,6 +724,7 @@ public class KYCCommunication {
                                 aware_pollingFinalResultStep(counter + 1);
                             }
                         }
+
                         // Server operation is finished.
                         else if (status != null && status.equalsIgnoreCase(STATE_FINISHED)) {
                             final KYCResponse result = new KYCResponse(res.getJSONObject("state").getJSONObject("result"));
@@ -587,8 +753,15 @@ public class KYCCommunication {
                             }
 
                             // Specific error management for face verification
-                            else if (  (statusCode >= 4610)
-                                     &&(statusCode <= 4612)) {
+                            else if (  (  (statusCode >= 4610)
+                                        &&(statusCode <= 4612)
+                                       )
+                                     ||(  (statusCode == 0)
+                                        &&(res.getJSONObject("state").getJSONObject("result").getJSONObject("object") != null)
+                                        &&(res.getJSONObject("state").getJSONObject("result").getJSONObject("object").getJSONObject("face") != null)
+                                        &&(res.getJSONObject("state").getJSONObject("result").getJSONObject("object").getJSONObject("face").getString("result").toUpperCase().equals("MATCH_NEGATIVE"))
+                                       )
+                                    ) {
                                     mSession.handleErrorRetry(KYCManager.getInstance().getErrorMessage(String.valueOf(statusCode), message), KYCSession.RETRY_SELFIE_SCAN);
                             }
 
@@ -657,6 +830,67 @@ public class KYCCommunication {
         // Build final JSON.
         final JSONObject json = new JSONObject();
         json.put("name", "Verify_Document");
+        json.put("input", input);
+
+        return json;
+    }
+
+    /**
+     * Creates the HTTP JSON body.
+     *
+     * @param nfcData  NFC data from SDK.
+     * @return JSON representation of the data.
+     * @throws JSONException If error occured while setting up JSON object.
+     */
+    private JSONObject idv_createNfcVerificationJSON(final CaptureResult nfcData) throws JSONException {
+        JSONObject chipData = new JSONObject();
+        JSONObject dg = new JSONObject();
+        JSONObject status = new JSONObject();
+
+        try {
+            // DG
+            Map<String, byte[]> mapDg = nfcData.rawData.dg;
+
+            for (String key : mapDg.keySet()) {
+                dg.put(key, Base64.encodeToString(mapDg.get(key), Base64.NO_WRAP));
+            }
+
+            // Status
+            Map<String, Integer> mapStatus = nfcData.rawData.status;
+
+            for (String key : mapStatus.keySet()) {
+                int sw = mapStatus.get(key);
+
+                status.put(key, Integer.toString(sw));
+
+//                if (sw != 0) {
+//                    status.put(key, "0x" + Integer.toHexString(sw));
+//                }
+//                else {
+//                    status.put(key, Integer.toHexString(sw));
+//                }
+            }
+
+            // ChipData
+            chipData.put("com", Base64.encodeToString(nfcData.rawData.com, Base64.NO_WRAP));
+            chipData.put("sod", Base64.encodeToString(nfcData.rawData.sod, Base64.NO_WRAP));
+            chipData.put("dg", dg);
+            chipData.put("status", status);
+            chipData.put("signature", Base64.encodeToString(nfcData.rawData.signature, Base64.NO_WRAP));
+            chipData.put("version", "2");
+        }
+        catch(Exception e) {
+        }
+
+        // Input is object containing document and optionally face.
+        final JSONObject input = new JSONObject();
+
+        input.put("chipData", chipData);
+        input.put("channel", "defaultchip");
+
+        // Build final JSON.
+        final JSONObject json = new JSONObject();
+        json.put("name", KYCManager.getInstance().isFacialRecognition() ? "Verify_Electronic_Document_Face_Enhanced_Liveness" : "Verify_Electronic_Document");
         json.put("input", input);
 
         return json;
@@ -758,7 +992,7 @@ public class KYCCommunication {
 
         // Build final JSON.
         final JSONObject json = new JSONObject();
-        json.put("name", "Verify_Document_Face_Enhanced_Liveness");
+        json.put("name", KYCManager.getInstance().isNfcMode() ? "Verify_Electronic_Document_Face_Enhanced_Liveness" : "Verify_Document_Face_Enhanced_Liveness");
 
         final JSONObject input = new JSONObject();
         input.put("enhancedLiveness", newServerData);
@@ -802,6 +1036,9 @@ public class KYCCommunication {
                 if (json != null) {
                     JsonUtil.logJson(json, "JSON Request");
                 }
+                else {
+                    Log.w("KYC", "GET...");
+                }
 
                 // Prepare stream.
                 if (json != null) {
@@ -817,6 +1054,7 @@ public class KYCCommunication {
                 final StringBuilder responseSB = new StringBuilder();
                 final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 String line = reader.readLine();
+
                 while (line != null) {
                     responseSB.append(line);
                     line = reader.readLine();

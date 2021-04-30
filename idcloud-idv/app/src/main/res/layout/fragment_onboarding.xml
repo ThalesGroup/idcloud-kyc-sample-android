@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--MIT License-->
+
+<!--Copyright (c) 2019 Thales DIS-->
+
+<!--Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated-->
+<!--documentation files (the "Software"), to deal in the Software without restriction, including without limitation the-->
+<!--rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to-->
+<!--permit persons to whom the Software is furnished to do so, subject to the following conditions:-->
+
+<!--The above copyright notice and this permission notice shall be included in all copies or substantial portions of the-->
+<!--Software.-->
+
+<!--THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE-->
+<!--WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR-->
+<!--COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR-->
+<!--OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.-->
+
+<!--IMPORTANT: This source code is intended to serve training information purposes only.-->
+<!--Please make sure to review our IdCloud documentation, including security guidelines.-->
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/img_gradient_primary"
+    android:gravity="center|top"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/fragment_onboarding_caption"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/dimensionMarginNormal"
+        android:layout_gravity="center"
+        android:gravity="start"
+        android:textSize="@dimen/dimensionTextSizeHeader"
+        android:textColor="@color/colorTextPrimary"
+        android:text="@string/fragment_onboarding_caption" />
+
+    <TextView
+        android:id="@+id/fragment_onboarding_text_doc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/dimensionMarginSmall"
+        android:gravity="center"
+        android:textSize="@dimen/dimensionTextSizeHeaderSecondary"
+        android:textColor="@color/colorTextPrimary"
+        android:text="@string/fragment_onboarding_doc_type" />
+
+    <LinearLayout
+        android:id="@+id/fragment_onboarding_doc_type"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center">
+        <LinearLayout
+            android:id="@+id/fragment_onboarding_ico_1"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/dimensionMarginNormal"
+            android:background="@drawable/button_circle_icon"
+            android:orientation="vertical"
+            >
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/dimensionMarginSmall"
+                android:contentDescription="@android:string/untitled"
+                android:src="@drawable/icon_passport"/>
+            <RadioButton
+                android:id="@+id/fragment_onboarding_doc_passport"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="@null"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="@dimen/dimensionTextSizeSmall"
+                android:text="@string/fragment_onboarding_doc_passport"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/fragment_onboarding_ico_2"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/dimensionMarginNormal"
+            android:background="@drawable/button_circle_icon"
+            android:orientation="vertical"
+            >
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/dimensionMarginSmall"
+                android:src="@drawable/icon_id_card" />
+            <RadioButton
+                android:id="@+id/fragment_onboarding_doc_id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/fragment_onboarding_doc_id"
+                android:background="@null"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="@dimen/dimensionTextSizeSmall"
+                />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/fragment_onboarding_text_face"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/dimensionMarginSmall"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:textSize="@dimen/dimensionTextSizeHeaderSecondary"
+        android:textColor="@color/colorTextPrimary"
+        android:text="@string/fragment_onboarding_face_verif" />
+    <LinearLayout
+        android:id="@+id/fragment_onboarding_face_verif"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center">
+        <LinearLayout
+            android:id="@+id/fragment_onboarding_ico_3"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/dimensionMarginNormal"
+            android:background="@drawable/button_circle_icon"
+            android:orientation="vertical"
+            >
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/dimensionMarginSmall"
+                android:src="@drawable/face_verif_yes" />
+            <RadioButton
+                android:id="@+id/fragment_onboarding_face_verif_yes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/fragment_onboarding_face_verif_yes"
+                android:background="@null"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="@dimen/dimensionTextSizeSmall"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/fragment_onboarding_ico_4"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/dimensionMarginNormal"
+            android:background="@drawable/button_circle_icon"
+            android:orientation="vertical"
+            >
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/dimensionMarginSmall"
+                android:contentDescription="@android:string/untitled"
+                android:src="@drawable/face_verif_no"/>
+            <RadioButton
+                android:id="@+id/fragment_onboarding_face_verif_no"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/dimensionMarginSmall"
+                android:layout_gravity="center"
+                android:background="@null"
+                android:textColor="@color/colorTextPrimary"
+                android:text="@string/fragment_onboarding_face_verif_no"
+                android:textSize="@dimen/dimensionTextSizeSmall"
+                />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical"/>
+
+    <Button
+        android:id="@+id/fragment_onboarding_button_next"
+        style="@style/AppTheme.Button"
+        android:layout_marginBottom="@dimen/dimensionMarginBig"
+        android:text="@string/fragment_onboarding_button_next"/>
+</LinearLayout>

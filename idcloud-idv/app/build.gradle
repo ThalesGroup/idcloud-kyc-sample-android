@@ -6,8 +6,8 @@ android {
         applicationId "com.thalesgroup.kyc.idv"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 321009
-        versionName "3.2.1-009"
+        versionCode 400022
+        versionName "4.0.0-022"
         testInstrumentationRunner "androidx.move_in_from_left.runner.AndroidJUnitRunner"
         ndkVersion '16.1.4479499'
     }
@@ -26,30 +26,38 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support:support-v4:29.0.0'
-    implementation 'com.android.support:appcompat-v7:29.0.0'
-    implementation 'com.android.support:design:29.0.0'
-    implementation 'com.android.support.constraint:constraint-layout:2.0.3'
-    implementation 'com.android.support:support-vector-drawable:29.0.0'
-    implementation 'com.android.support:support-vector-drawable:29.0.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
+    implementation 'androidx.core:core-ktx:1.3.2'
+    implementation 'com.google.android.material:material:1.3.0'
     implementation 'com.madgag.spongycastle:core:1.58.0.0'
 
     // JNA lib
-    implementation 'net.java.dev.jna:jna:5.5.0@aar'
+    implementation 'net.java.dev.jna:jna:5.8.0@aar'
 
     // UI Style
     implementation project(':idcloudstyle')
 
     // QR Code Scanner
-    implementation 'me.dm7.barcodescanner:zxing:1.9.8'
+    implementation 'me.dm7.barcodescanner:zxing:1.9.13'
 
     // IDV
-    implementation(name:'IDV_DOC', ext:'aar')
+    implementation project(':IDV_DOC')
+    implementation project(':IDV_MRZ')
+    implementation project(':IDV_NFC')
 
     // Aware
-    implementation(name:'Knomi-S-Face-SDK-release_x', ext:'aar')
+    implementation project(':Aware')
 
-    // JWTDecode
-    implementation 'com.auth0.android:jwtdecode:1.4.0'
+    // JPEG2000 image process
+    implementation 'com.gemalto.jp2:jp2-android:1.0'
+
+    // JSON
+    implementation 'com.google.code.gson:gson:2.8.6'
+
+    // GIF Decoder
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
 }
 

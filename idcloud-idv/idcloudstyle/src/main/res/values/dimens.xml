@@ -13,6 +13,7 @@
     <dimen name="dimensionTextSizeHeader">26dp</dimen>
     <dimen name="dimensionTextSizeHeaderSecondary">22dp</dimen>
     <dimen name="dimensionTextSizeNormal">16dp</dimen>
+    <dimen name="dimensionTextSizeSmall">12dp</dimen>
 
     <!--Generic Offsets-->
     <dimen name="dimensionMarginBig">20dp</dimen>

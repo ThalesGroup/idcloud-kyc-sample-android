@@ -35,6 +35,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Utility class for JSON operations.
  */
@@ -135,16 +138,42 @@ public class JsonUtil {
         }
     }
 
-    public static void logJson(String jsonString, String name) {
+    public static void logJson(String jsonStr, String name) {
         if (BuildConfig.DEBUG) {
-            Log.w("KYC", name + " (" + jsonString.length() + " bytes)");
+            try {
+                JSONObject json = new JSONObject(jsonStr);
+                String jsonString = json.toString(4);
+                Log.w("KYC", name + " (" + json.toString().length() + " bytes)");
 
-            String[] strs = jsonString.split(",");
+                String[] strs = jsonString.split("\n");
 
-            for (int i = 0; i < strs.length; i++) {
-                Log.i("KYC", strs[i] + ",");
+                for (int i = 0; i < strs.length; i++) {
+                    if (strs[i].length() < 2048) {
+                        Log.w("KYC", strs[i]);
+                    } else {
+                        String[] subStrs = splitToNChar(strs[i], 2048);
+
+                        for (int j = 0; j < subStrs.length; j++) {
+                            Log.w("KYC", subStrs[j]);
+                        }
+                    }
+                }
+            }
+            catch (Exception e) {
+
             }
         }
+    }
+
+    private static String[] splitToNChar(String text, int size) {
+        List<String> parts = new ArrayList<>();
+        int length = text.length();
+
+        for (int i = 0; i < length; i += size) {
+            parts.add(text.substring(i, Math.min(length, i + size)));
+        }
+
+        return parts.toArray(new String[0]);
     }
     //endregion
 }

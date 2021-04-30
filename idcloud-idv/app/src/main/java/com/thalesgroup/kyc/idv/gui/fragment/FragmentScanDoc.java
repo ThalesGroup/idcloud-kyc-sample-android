@@ -44,11 +44,14 @@ import com.thalesgroup.kyc.idv.helpers.util.AssetHelper;
 
 import java.util.Locale;
 
-public class FragmentThirdStep extends AbstractFragmentBase {
+public class FragmentScanDoc extends AbstractFragmentBase {
 
     //region Definition
 
     private AbstractOption.DocumentType mDocumentType;
+    private TextView mLabelCaption;
+    private TextView mLabelDescriptionFirst;
+    private TextView mLabelDescriptionSecond;
     private ImageView mImageFirst;
     private ImageView mImageSecond;
 
@@ -62,15 +65,15 @@ public class FragmentThirdStep extends AbstractFragmentBase {
                              final Bundle savedInstanceState) {
         DataContainer.instance().clearDocData();
 
-        final View retValue = inflater.inflate(R.layout.fragment_third_step, container, false);
+        final View retValue = inflater.inflate(R.layout.fragment_scan_doc, container, false);
 
         // Get all elements.
-        final TextView labelCaption = retValue.findViewById(R.id.fragment_third_step_caption);
-        final TextView labelDescriptionFirst = retValue.findViewById(R.id.fragment_third_step_description_01);
-        final TextView labelDescriptionSecond = retValue.findViewById(R.id.fragment_third_step_description_02);
-        mImageFirst = retValue.findViewById(R.id.fragment_third_step_image_01);
-        mImageSecond = retValue.findViewById(R.id.fragment_third_step_image_02);
-        final Button buttonNext = retValue.findViewById(R.id.fragment_third_step_button_next);
+        mLabelCaption = retValue.findViewById(R.id.fragment_scan_doc_caption);
+        mLabelDescriptionFirst = retValue.findViewById(R.id.fragment_scan_doc_description_01);
+        mLabelDescriptionSecond = retValue.findViewById(R.id.fragment_scan_doc_description_02);
+        mImageFirst = retValue.findViewById(R.id.fragment_scan_doc_image_01);
+        mImageSecond = retValue.findViewById(R.id.fragment_scan_doc_image_02);
+        final Button buttonNext = retValue.findViewById(R.id.fragment_scan_doc_button_next);
 
         // Get argument to determine document type.
         final Bundle arguments = getArguments();
@@ -79,17 +82,17 @@ public class FragmentThirdStep extends AbstractFragmentBase {
         }
 
         // Update caption and pictures based on type.
-        labelCaption.setText(caption());
-        labelDescriptionFirst.setText(labelForIndex(1));
-        labelDescriptionSecond.setText(labelForIndex(2));
+        mLabelCaption.setText(caption());
+        mLabelDescriptionFirst.setText(labelForIndex(1));
+        mLabelDescriptionSecond.setText(labelForIndex(2));
         mImageFirst.setImageBitmap(AssetHelper.getBitmapFromAsset(imageForIndex(1), inflater.getContext()));
         mImageSecond.setImageBitmap(AssetHelper.getBitmapFromAsset(imageForIndex(2), inflater.getContext()));
 
         // Animate caption and description.
-        long delay = KYCManager.animateViewWithDelay(labelCaption, 0);
-        delay = KYCManager.animateViewWithDelay(labelDescriptionFirst, delay);
+        long delay = KYCManager.animateViewWithDelay(mLabelCaption, 0);
+        delay = KYCManager.animateViewWithDelay(mLabelDescriptionFirst, delay);
         delay = KYCManager.animateViewWithDelay(mImageFirst, delay);
-        delay = KYCManager.animateViewWithDelay(labelDescriptionSecond, delay);
+        delay = KYCManager.animateViewWithDelay(mLabelDescriptionSecond, delay);
         KYCManager.animateViewWithDelay(mImageSecond, delay);
         KYCManager.animateViewWithDelay(buttonNext, 0);
 
@@ -114,24 +117,40 @@ public class FragmentThirdStep extends AbstractFragmentBase {
     //region Private Helpers
 
     private int caption() {
-        if (mDocumentType == AbstractOption.DocumentType.Passport) {
-            return R.string.STRING_KYC_DOC_SCAN_CAPTION_PASSPORT;
-        } else {
-            return R.string.STRING_KYC_DOC_SCAN_CAPTION_IDCARD;
+        if (KYCManager.getInstance().isNfcMode()) {
+            if (mDocumentType == AbstractOption.DocumentType.Passport) {
+                return R.string.STRING_KYC_MRZ_SCAN_CAPTION_PASSPORT;
+            } else {
+                return R.string.STRING_KYC_MRZ_SCAN_CAPTION_IDCARD;
+            }
+        }
+        else {
+            if (mDocumentType == AbstractOption.DocumentType.Passport) {
+                return R.string.STRING_KYC_DOC_SCAN_CAPTION_PASSPORT;
+            } else {
+                return R.string.STRING_KYC_DOC_SCAN_CAPTION_IDCARD;
+            }
         }
     }
 
     private int labelForIndex(final int index) {
-        final String stringKey = String.format(Locale.ENGLISH,"STRING_KYC_DOC_SCAN_%02d", index);
+        String stringKey = String.format(Locale.ENGLISH,"STRING_KYC_DOC_SCAN_%02d", index);
+
+        if (KYCManager.getInstance().isNfcMode()) {
+            stringKey = String.format(Locale.ENGLISH,"STRING_KYC_MRZ_SCAN_%02d", index);
+        }
 
         return KYCManager.getResId(stringKey, R.string.class);
     }
 
     private String imageForIndex(final int index) {
-        final boolean automatic = true;
         final String type = mDocumentType == AbstractOption.DocumentType.Passport ? "passport" : "id_card";
 
-        return String.format(Locale.ENGLISH,"kyc_third_step_%s_%02d.png", type, index);
+        if (KYCManager.getInstance().isNfcMode()) {
+            return String.format(Locale.ENGLISH,"kyc_scan_doc_%s_%02d.png", "mrz", index);
+        }
+
+        return String.format(Locale.ENGLISH,"kyc_scan_doc_%s_%02d.png", type, index);
     }
 
     //endregion

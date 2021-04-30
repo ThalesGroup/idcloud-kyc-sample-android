@@ -30,9 +30,11 @@ package com.thalesgroup.kyc.idv.gui.view;
 import android.content.Context;
 import android.os.Handler;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.thalesgroup.kyc.idv.R;
@@ -100,7 +102,7 @@ public class DocumentStepDetailView extends LinearLayout {
     //region Public API
 
     public void presentInGroupView(final ViewGroup parent,
-                                   final ImageView overlay,
+                                   final View overlay,
                                    final CompletionHandler handler,
                                    final boolean isBlocking) {
         parent.addView(this);
@@ -159,7 +161,7 @@ public class DocumentStepDetailView extends LinearLayout {
     //region Private Helpers
 
     private void hideView(final float hiddenPosY,
-                          final ImageView overlay,
+                          final View overlay,
                           final CompletionHandler handler) {
         // Remove listener once view is going to hide.
         setOnClickListener(null);

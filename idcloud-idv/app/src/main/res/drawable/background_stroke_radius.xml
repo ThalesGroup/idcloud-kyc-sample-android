@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <corners android:radius="@dimen/dimensionButtonBackgroundCornerRadius" />
-    <stroke android:width="1dp" android:color="#B1BCBE" />
+    <solid android:color="@color/colorButtonBackground" />
+    <stroke android:width="1dp" android:color="#000000" />
 </shape>

@@ -158,6 +158,55 @@ public class KYCDocument {
     }
 
     /**
+     * Gets the interpreted result.
+     *
+     * @return Result.
+     */
+    public String getInterpretedResult() {
+        if (mResult.toLowerCase().equals("success")) {
+            return "Success";
+        }
+        else if (mResult.toLowerCase().equals("nofailedchecks")) {
+            return "Success";
+        }
+        else if (mResult.toLowerCase().equals("vizcrosscheckfailed")) {
+            return "Data crosscheck failed";
+        }
+        else if (mResult.toLowerCase().equals("documentexpired")) {
+            return "Expired";
+        }
+        else if (mResult.toLowerCase().equals("document_expired")) {
+            return "Expired";
+        }
+        else if (mResult.toLowerCase().equals("documentpagemissing")) {
+            return "Missing one side";
+        }
+        else if (mResult.toLowerCase().equals("nofailedsubsetofchecks")) {
+            return "No crosschecks done";
+        }
+        else if (mResult.toLowerCase().equals("specimendetected")) {
+            return "Specimen";
+        }
+        else if (mResult.toLowerCase().equals("securitycheckfailed")) {
+            return "Some security check failed";
+        }
+        else if (mResult.toLowerCase().equals("security_issue")) {
+            return "Some security check failed";
+        }
+        else if (mResult.toLowerCase().equals("qa_ok")) {
+            return "Quality check passed";
+        }
+        else if (mResult.toLowerCase().equals("qa_ko")) {
+            return "Quality check failed";
+        }
+        else if (mResult.toLowerCase().equals("qa_not_done")) {
+            return "Quality check not done";
+        }
+
+        return mResult;
+    }
+
+    /**
      * Gets the gender.
      *
      * @return Gender.

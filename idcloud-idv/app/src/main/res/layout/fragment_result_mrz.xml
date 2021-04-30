@@ -20,7 +20,8 @@
 <!--IMPORTANT: This source code is intended to serve training information purposes only.-->
 <!--Please make sure to review our IdCloud documentation, including security guidelines.-->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/img_gradient_primary"
@@ -28,7 +29,7 @@
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/fragment_first_step_caption"
+        android:id="@+id/fragment_res_mrz_caption"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/dimensionMarginNormal"
@@ -36,28 +37,49 @@
         android:gravity="start"
         android:textSize="@dimen/dimensionTextSizeHeader"
         android:textColor="@color/colorTextPrimary"
-        android:text="@string/fragment_first_step_caption" />
+        android:text="@string/fragment_res_mrz_caption" />
 
 
     <TextView
-        android:id="@+id/fragment_first_step_description"
+        android:id="@+id/fragment_res_mrz_description"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/dimensionMarginNormal"
         android:textColor="@color/colorTextPrimary"
-        android:text="@string/fragment_first_step_description" />
+        android:text="@string/fragment_res_mrz_description" />
 
     <LinearLayout
-        android:id="@+id/fragment_first_step_layout"
         android:layout_weight="1"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:orientation="vertical"/>
+        android:gravity="center"
+        android:orientation="vertical"
+        >
+        <LinearLayout
+            android:id="@+id/fragment_res_mrz_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:background="@drawable/background_stroke_radius"
+            android:padding="@dimen/dimensionMarginMinimal"
+            android:layout_margin="@dimen/dimensionMarginSmall"
+            >
+            <TextView
+                android:id="@+id/fragment_res_mrz_data"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/dimensionMarginNormal"
+                android:textColor="@color/colorTextPrimary"
+                android:text="Document number: A12345678\nDate of birth: 710101\nDate of expiry: 210101"
+                />
+        </LinearLayout>
+    </LinearLayout>
 
     <Button
-        android:id="@+id/fragment_first_step_button_next"
+        android:id="@+id/fragment_res_mrz_button_next"
         style="@style/AppTheme.Button"
         android:layout_marginBottom="@dimen/dimensionMarginBig"
-        android:text="@string/fragment_first_step_button_next"/>
-
+        android:paddingBottom="0dp"
+        android:text="@string/fragment_res_mrz_button_next"/>
 </LinearLayout>

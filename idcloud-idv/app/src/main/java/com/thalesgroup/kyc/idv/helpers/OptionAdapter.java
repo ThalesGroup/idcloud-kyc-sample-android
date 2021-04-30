@@ -370,7 +370,7 @@ public class OptionAdapter extends BaseAdapter {
             }
         }
 
-        // Prepare simple defaiult adapter.
+        // Prepare simple default adapter.
         final ArrayAdapter<SegmentKeyCaption> spinnerArrayAdapter = new ArrayAdapter<>(mContext, android.R.layout.simple_spinner_item, segmentItems);
         spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 

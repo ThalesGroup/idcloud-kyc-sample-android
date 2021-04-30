@@ -53,22 +53,28 @@
 
 package com.thalesgroup.kyc.idv.gui.fragment;
 
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.nfc.NfcAdapter;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
-
-import com.thalesgroup.kyc.idv.R;
-import com.thalesgroup.kyc.idv.helpers.DataContainer;
-import com.thalesgroup.kyc.idv.helpers.KYCManager;
 
 import androidx.annotation.DrawableRes;
-import androidx.annotation.StringRes;
+import androidx.appcompat.app.AlertDialog;
 
-public class FragmentFirstStep extends AbstractFragmentBase {
+import com.bumptech.glide.Glide;
+import com.thalesgroup.kyc.idv.R;
+import com.thalesgroup.kyc.idv.helpers.KYCManager;
+
+public class FragmentNfcInstructions extends AbstractFragmentBase {
+    protected LinearLayout mLayout;
+    protected Button mButton;
 
     //region Life Cycle
 
@@ -76,52 +82,63 @@ public class FragmentFirstStep extends AbstractFragmentBase {
     public View onCreateView(final LayoutInflater inflater,
                              final ViewGroup container,
                              final Bundle savedInstanceState) {
-        final View retValue = inflater.inflate(R.layout.fragment_first_step, container, false);
+        final View retValue = inflater.inflate(R.layout.fragment_nfc_instructions, container, false);
+
+        mButton = retValue.findViewById(R.id.fragment_nfc_button_next);
 
         // Animate caption and description
-        long delay = KYCManager
-                .animateViewWithDelay(retValue.findViewById(R.id.fragment_first_step_caption), 0);
-        delay = KYCManager.animateViewWithDelay(retValue.findViewById(R.id.fragment_first_step_description), delay);
+        long delay = KYCManager.animateViewWithDelay(retValue.findViewById(R.id.fragment_nfc_caption), 0);
+        delay = KYCManager.animateViewWithDelay(retValue.findViewById(R.id.fragment_nfc_description), delay);
 
         // Populate layout with all steps
-        final LinearLayout layout = retValue.findViewById(R.id.fragment_first_step_layout);
-        delay = addChevron(R.drawable.chevron_id, R.string.STRING_KYC_FIRST_STEP_ID, layout, delay);
+        mLayout = retValue.findViewById(R.id.fragment_nfc_layout);
 
-        if (KYCManager.getInstance().isFacialRecognition()) {
-            delay = addChevron(R.drawable.chevron_identity, R.string.STRING_KYC_FIRST_STEP_FACE, layout, delay);
-        }
-        addChevron(R.drawable.chevron_review, R.string.STRING_KYC_FIRST_STEP_REVIEW, layout, delay);
+        addGif(R.drawable.nfc_instructions, mLayout);
 
-        KYCManager.animateViewWithDelay(retValue.findViewById(R.id.fragment_first_step_button_next), 0);
-        retValue.findViewById(R.id.fragment_first_step_button_next).setOnClickListener(view -> onButtonPressedNext());
+        KYCManager.animateViewWithDelay(mLayout, delay);
 
-        DataContainer.instance().clearDocData();
+        mButton.setText(R.string.fragment_nfc_instructions_button_next);
+        mButton.setOnClickListener(view -> onButtonPressedNext());
 
         return retValue;
     }
-
     //endregion
 
     //region Private Helpers
+    private long addGif(@DrawableRes final int gif,
+                        final LinearLayout parent) {
+        final View view = getLayoutInflater().inflate(R.layout.view_gif, null);
+        final ImageView image = view.findViewById(R.id.view_gif_image_small);
 
-    private long addChevron(@DrawableRes final int icon,
-                            @StringRes final int caption,
-                            final LinearLayout parent,
-                            final long delay) {
-        final View view = getLayoutInflater().inflate(R.layout.view_step, null);
-        final ImageView image = view.findViewById(R.id.view_step_image);
-        final TextView text = view.findViewById(R.id.view_step_text);
-
-        image.setImageDrawable(getContext().getDrawable(icon));
-        text.setText(caption);
+        Glide.with(this).load(gif).into(image);
         parent.addView(view);
 
-        return KYCManager.animateViewWithDelay(view, delay);
+        return KYCManager.animateViewWithDelay(view, 0);
+    }
+
+    private void onButtonPressedNext() {
+        NfcAdapter nfcAdapter = android.nfc.NfcAdapter.getDefaultAdapter(getContext());
+
+        if (!nfcAdapter.isEnabled()) {
+            AlertDialog.Builder alertbox = new AlertDialog.Builder(getContext());
+            alertbox.setTitle(R.string.app_name);
+            alertbox.setIcon(R.drawable.error);
+            alertbox.setMessage(getString(R.string.fragment_nfc_instructions_enable_nfc_message));
+
+            alertbox.setPositiveButton(getString(R.string.fragment_nfc_instructions_enable_nfc_button), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent intent = new Intent(Settings.ACTION_NFC_SETTINGS);
+                    startActivity(intent);
+                }
+            });
+
+            alertbox.show();
+        }
+        else {
+            getMainActivity().displayFragment(new FragmentNfcScan(), true, true);
+        }
     }
 
     //endregion
-
-    private void onButtonPressedNext() {
-        getMainActivity().displayFragment(new FragmentSecondStep(), true, true);
-    }
 }

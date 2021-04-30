@@ -187,7 +187,7 @@ public class AwareLivenessFragment extends Fragment implements WorkflowStateCall
             mEvent = event;
 
             if(mEvent.equals("NONE"))
-                displayMessage(getResources().getString(R.string.hold));
+                displayMessage(getResources().getString(R.string.compliant));
             else {
                 displayMessage(mEvent);
             }

@@ -446,19 +446,77 @@ public class FragmentKycOverview extends AbstractFragmentBase {
                 final StringBuilder captionInfo = new StringBuilder();
                 final StringBuilder valueInfo = new StringBuilder();
 
-                String name = captureResult.parsedData.personalDetails.fullName.replace("<", " ");
+                String name;
+
+                if (captureResult.parsedData.personalDetails.fullName != null) {
+                    captureResult.parsedData.mrz.nameOfDocumentHolder = captureResult.parsedData.personalDetails.fullName;
+                }
+
+                if (captureResult.parsedData.personalDetails.dateOfBirth != null) {
+                    captureResult.parsedData.mrz.dateOfBirth = captureResult.parsedData.personalDetails.dateOfBirth;
+                }
+
+                // Default data if null
+                if (captureResult.parsedData.mrz.nameOfDocumentHolder == null) {
+                    captureResult.parsedData.mrz.nameOfDocumentHolder = "UNKNOWN";
+                }
+                if (captureResult.parsedData.mrz.dateOfBirth == null) {
+                    captureResult.parsedData.mrz.dateOfBirth ="UNKNOWN";
+                }
+                if (captureResult.parsedData.mrz.gender == null) {
+                    captureResult.parsedData.mrz.gender = "UNKNOWN";
+                }
+                if (captureResult.parsedData.mrz.nationality == null) {
+                    captureResult.parsedData.mrz.nationality = "UNKNOWN";
+                }
+                if (captureResult.parsedData.mrz.documentType == null) {
+                    captureResult.parsedData.mrz.documentType = "UNKNOWN";
+                }
+                if (captureResult.parsedData.mrz.documentNumber == null) {
+                    captureResult.parsedData.mrz.documentNumber = "UNKNOWN";
+                }
+                if (captureResult.parsedData.mrz.dateOfExpiry == null) {
+                    captureResult.parsedData.mrz.dateOfExpiry ="UNKNOWN";
+                }
+
+                name = captureResult.parsedData.mrz.nameOfDocumentHolder.replace("<", " ").trim();
 
                 captionName.append(getString(R.string.kyc_result_name));
                 valueName.append(name);
 
-                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_birth_date), captureResult.parsedData.personalDetails.dateOfBirth);
+                String birthDate = captureResult.parsedData.mrz.dateOfBirth;
+                String expiryDate = captureResult.parsedData.mrz.dateOfExpiry;
+
+                if (birthDate.length() == 6) {
+                    String tmp;
+
+                    if (birthDate.startsWith("0") || birthDate.startsWith("1") || birthDate.startsWith("2")) {
+                        tmp = "20" + birthDate.substring(0, 2) + "/" + birthDate.substring(2, 4) + "/" + birthDate.substring(4);
+                    } else {
+                        tmp = "19" + birthDate.substring(0, 2) + "/" + birthDate.substring(2, 4) + "/" + birthDate.substring(4);
+                    }
+
+                    birthDate = tmp;
+                }
+
+                if (expiryDate.length() == 6) {
+                    String tmp;
+
+                    if (expiryDate.startsWith("0") || expiryDate.startsWith("1") || expiryDate.startsWith("2")) {
+                        tmp = "20" + expiryDate.substring(0, 2) + "/" + expiryDate.substring(2, 4) + "/" + expiryDate.substring(4);
+                    } else {
+                        tmp = "19" + expiryDate.substring(0, 2) + "/" + expiryDate.substring(2, 4) + "/" + expiryDate.substring(4);
+                    }
+
+                    expiryDate = tmp;
+                }
+
+                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_birth_date), birthDate);
                 appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_gender), captureResult.parsedData.mrz.gender);
                 appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_nationality), captureResult.parsedData.mrz.nationality);
-                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_doc_type), captureResult.parsedData.mrz.documentType.replace("<", " "));
+                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_doc_type), captureResult.parsedData.mrz.documentType.replace("<", " ").trim());
                 appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_doc_number), captureResult.parsedData.mrz.documentNumber);
-
-                String expiryDate = captureResult.parsedData.mrz.dateOfExpiry;
-                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_expiry_date), "20" + expiryDate.substring(0, 2) + "/" + expiryDate.substring(2, 4) + "/" + expiryDate.substring(4));
+                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_expiry_date), expiryDate);
 
                 // Extracted selfie
                 if (captureResult.parsedData.faceImage != null) {

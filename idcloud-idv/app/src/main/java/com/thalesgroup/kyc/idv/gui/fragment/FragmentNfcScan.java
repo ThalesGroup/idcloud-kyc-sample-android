@@ -446,7 +446,6 @@ public class FragmentNfcScan extends AbstractFragmentBase implements CaptureList
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onProgress(CaptureProgress captureProgress) {
         mGlobalProgress.setProgress((int)(captureProgress.globalProgress * 100));

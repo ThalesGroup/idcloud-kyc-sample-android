@@ -511,10 +511,27 @@ public class FragmentKycOverview extends AbstractFragmentBase {
                     expiryDate = tmp;
                 }
 
+                String gender;
+                String documentType;
+
+                if (captureResult.parsedData.mrz.gender.equals("M")) {
+                    gender = "Male";
+                } else if (captureResult.parsedData.mrz.gender.equals("F")) {
+                    gender = "Female";
+                } else {
+                    gender = captureResult.parsedData.mrz.gender;
+                }
+
+                if (captureResult.parsedData.mrz.documentType.replace("<", " ").trim().equals("P")) {
+                    documentType = "Passport";
+                } else {
+                    documentType = captureResult.parsedData.mrz.documentType.replace("<", " ").trim();
+                }
+
                 appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_birth_date), birthDate);
-                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_gender), captureResult.parsedData.mrz.gender);
+                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_gender), gender);
                 appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_nationality), captureResult.parsedData.mrz.nationality);
-                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_doc_type), captureResult.parsedData.mrz.documentType.replace("<", " ").trim());
+                appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_doc_type), documentType);
                 appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_doc_number), captureResult.parsedData.mrz.documentNumber);
                 appendResultString(captionInfo, valueInfo, getString(R.string.kyc_result_expiry_date), expiryDate);
 

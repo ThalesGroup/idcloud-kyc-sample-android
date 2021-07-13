@@ -28,6 +28,7 @@ import com.thalesgroup.idv.sdk.nfc.CaptureSDK;
 import com.thalesgroup.idv.sdk.nfc.ConfigResult;
 import com.thalesgroup.kyc.idv.BuildConfig;
 import com.thalesgroup.kyc.idv.R;
+import com.thalesgroup.kyc.idv.helpers.AbstractOption;
 import com.thalesgroup.kyc.idv.helpers.DataContainer;
 import com.thalesgroup.kyc.idv.helpers.KYCConfiguration;
 import com.thalesgroup.kyc.idv.helpers.KYCManager;
@@ -331,8 +332,11 @@ public class FragmentNfcScan extends AbstractFragmentBase implements CaptureList
 
             AccessKey key = AccessKey.createMRZ(DataContainer.instance().mDoc, DataContainer.instance().mDob, DataContainer.instance().mDoe);
 
-            mNfcReader.start(key, CaptureSDK.Protocol.BAC, this);
-
+            if (KYCManager.getInstance().getDocType() == AbstractOption.DocumentType.Passport) {
+                mNfcReader.start(key, CaptureSDK.Protocol.BAC, this);
+            } else {
+                mNfcReader.start(key, this);
+            }
             mIsTimerAborted = false;
 
             // Timer for Timeout
@@ -448,6 +452,10 @@ public class FragmentNfcScan extends AbstractFragmentBase implements CaptureList
 
     @Override
     public void onProgress(CaptureProgress captureProgress) {
+        if (BuildConfig.DEBUG) {
+            Log.i("KYC", "NFC.onProgress(): " + captureProgress.globalProgress + "%");
+        }
+
         mGlobalProgress.setProgress((int)(captureProgress.globalProgress * 100));
 
         if (captureProgress.step < 100) {
@@ -458,7 +466,7 @@ public class FragmentNfcScan extends AbstractFragmentBase implements CaptureList
     @Override
     public void onResult(CaptureResult captureResult) {
         if (BuildConfig.DEBUG) {
-            Log.i("KYC", "NFC.onResult()");
+            Log.i("KYC", "NFC.onResult(): " + captureResult.errorCode);
         }
 
         // End SDK

@@ -183,7 +183,7 @@ public class KYCManager implements FragmentQRCodeReader.QRCodeReaderDelegate {
 
                         new AbstractOption.Version(AbstractOption.OptionSection.Version,
                                 mContext.getString(R.string.STRING_DOC_SDK_OPTION_VERSION),
-                                "11.4.13"),
+                                "11.4.14"),
 
                         new AbstractOption.Version(AbstractOption.OptionSection.Version,
                                 mContext.getString(R.string.STRING_ENHANCED_FACE_OPTION_VERSION),

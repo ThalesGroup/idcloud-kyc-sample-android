@@ -29,18 +29,10 @@ package com.thalesgroup.kyc.idvconnect.helpers.util;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.util.Base64;
 
-import com.acuant.acuantcommon.model.Image;
-import com.acuant.acuantimagepreparation.AcuantImagePreparation;
-import com.acuant.acuantimagepreparation.model.CroppingData;
-
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 
 /**
  * Image helpers.
@@ -48,63 +40,6 @@ import java.io.IOException;
 public class ImageUtil {
 
     //region Public API
-
-    /**
-     * Reads file from given location.
-     *
-     * @param fileUrl
-     *         Location.
-     * @return Bytes or {code null} if error occures.
-     */
-    public static byte[] readFile(final String fileUrl) {
-        final File file = new File(fileUrl);
-        BufferedInputStream bufferedInputStream = null;
-        ByteArrayOutputStream outputStream = null;
-        try {
-            bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
-            outputStream = new ByteArrayOutputStream();
-            final byte[] buffer = new byte[4096];
-            int read = bufferedInputStream.read(buffer, 0, buffer.length);
-            while (read != -1) {
-                outputStream.write(buffer, 0, read);
-                read = bufferedInputStream.read(buffer, 0, buffer.length);
-            }
-        } catch (IOException e) {
-            return null;
-        } finally {
-            if (bufferedInputStream != null) {
-                try {
-                    bufferedInputStream.close();
-                } catch (IOException e) {
-                    // nothing to do
-                }
-            }
-
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    // nothing to do
-                }
-            }
-        }
-
-        return outputStream.toByteArray();
-    }
-
-    /**
-     * Crops the image.
-     *
-     * @param imageBytes
-     *         Input image.
-     * @return Output image.
-     */
-    public static Image cropImage(final byte[] imageBytes) {
-        final Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-        final CroppingData data = new CroppingData();
-        data.image = bitmap;
-        return AcuantImagePreparation.INSTANCE.crop(data);
-    }
 
     /**
      * Transforms {@code Bitmap} to {@code byte[]}.
@@ -116,27 +51,8 @@ public class ImageUtil {
     public static byte[] bitmapToBytes(final Bitmap bitmap) {
         final ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.PNG, 90, stream);
-//        bitmap.recycle();
 
         return stream.toByteArray();
-    }
-
-    /**
-     * Resizes image based on the width.
-     *
-     * @param bitmap Input image.
-     * @param width Desired width of resized image.
-     *
-     * @return Resized image.
-     */
-    public static Bitmap resize(final Bitmap bitmap, final int width) {
-        final float ratio = (float) width / bitmap.getWidth();
-        final int newHeight = Math.round(ratio * bitmap.getHeight());
-        final int newWidth = Math.round(ratio * bitmap.getWidth());
-        final Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
-//        bitmap.recycle();
-
-        return resizedBitmap;
     }
 
     /**

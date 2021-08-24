@@ -30,7 +30,6 @@ package com.thalesgroup.kyc.idvconnect.gui;
 import android.Manifest;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -53,11 +52,13 @@ import com.acuant.acuantcommon.initializer.IAcuantPackageCallback;
 import com.acuant.acuantcommon.model.Credential;
 import com.acuant.acuantcommon.model.Error;
 import com.acuant.acuantcommon.model.ErrorCodes;
-import com.acuant.acuantcommon.model.Image;
 import com.acuant.acuantfacecapture.FaceCaptureActivity;
 import com.acuant.acuanthgliveness.model.FaceCapturedImage;
 import com.acuant.acuantimagepreparation.AcuantImagePreparation;
+import com.acuant.acuantimagepreparation.background.EvaluateImageListener;
 import com.acuant.acuantimagepreparation.initializer.ImageProcessorInitializer;
+import com.acuant.acuantimagepreparation.model.AcuantImage;
+import com.acuant.acuantimagepreparation.model.CroppingData;
 import com.google.android.material.navigation.NavigationView;
 import com.thalesgroup.kyc.idvconnect.BuildConfig;
 import com.thalesgroup.kyc.idvconnect.R;
@@ -88,6 +89,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Main entry point of the application.
@@ -237,6 +240,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void tryAgainWithMessage(final String message) {
+        progressBarHide();
+
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Try Again");
         builder.setCancelable(false);
@@ -258,66 +263,72 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void onActivityResultDocument(final int resultCode, final Intent data) {
         if (resultCode == AcuantCameraActivity.RESULT_SUCCESS_CODE) {
             final String fileUrl = data.getStringExtra(Constants.ACUANT_EXTRA_IMAGE_URL);
-            final byte[] imageBytes = ImageUtil.readFile(fileUrl);
-            final Image croppedImage = ImageUtil.cropImage(imageBytes);
 
-            if ((BuildConfig.DEBUG) && (croppedImage.image != null)) {
-                Log.w("KYC", "Sharpness: " + AcuantImagePreparation.INSTANCE.sharpness(croppedImage.image));
-                Log.w("KYC", "Glare: " + AcuantImagePreparation.INSTANCE.sharpness(croppedImage.image));
-            }
+            progressBarShow();
 
-            if (croppedImage.image == null) {
-                tryAgainWithMessage(getString(R.string.STRING_KYC_DOC_NO_CROP));
-            }
-            else if (  (KYCManager.getInstance().isAdditionalImageChecks())
-                     &&(croppedImage.error != null && croppedImage.error.errorCode != ErrorCodes.ERROR_LowResolutionImage))
-            {
-                if (BuildConfig.DEBUG) {
-                    Log.e("KYC", "Crop error: " + croppedImage.error.errorDescription);
-                }
-                tryAgainWithMessage(croppedImage.error.errorDescription);
-            }
-            else {
-                final Integer sharpness = AcuantImagePreparation.INSTANCE.sharpness(croppedImage.image);
-                final Integer glare = AcuantImagePreparation.INSTANCE.glare(croppedImage.image);
+            AcuantImagePreparation.INSTANCE.evaluateImage(this, new CroppingData(fileUrl), new EvaluateImageListener() {
+                @Override
+                public void onSuccess(@NotNull AcuantImage acuantImage) {
+                    final Integer sharpness = acuantImage.getSharpness();
+                    final Integer glare = acuantImage.getGlare();
 
-                if (  (KYCManager.getInstance().isAdditionalImageChecks())
-                    &&(  (sharpness <  SHARPNESS_THRESHOLD)
-                       ||(glare < GLARE_THRESHOLD)
-                       ||(croppedImage.dpi < MANDATORY_RESOLUTION_THRESHOLD_SMALL)
-                      )
-                   ) {
-                    final String message = "Image did not meet basic criteria.\nSharpness: "
-                            + sharpness + "(" + SHARPNESS_THRESHOLD + ")\nGlare: "
-                            + glare + "(" + GLARE_THRESHOLD + ")\nDPI: "
-                            + croppedImage.dpi + "(" + MANDATORY_RESOLUTION_THRESHOLD_SMALL + ")";
-                    tryAgainWithMessage(message);
-                } else {
-                    // Limit maximum image resolution.
-                    Bitmap croppedBmp = croppedImage.image;
-                    if (croppedBmp.getWidth() > KYCManager.getInstance().getMaxImageWidth()) {
-                        croppedBmp = ImageUtil.resize(croppedBmp, KYCManager.getInstance().getMaxImageWidth());
+                    if (BuildConfig.DEBUG) {
+                        Log.w("KYC", "Sharpness: " + acuantImage.getSharpness());
+                        Log.w("KYC", "Glare: " + acuantImage.getGlare());
                     }
-                    final byte[] imageBytesResized = ImageUtil.bitmapToBytes(croppedBmp);
-                    if (mFrontDocument) {
-                        DataContainer.instance().mDocFront = imageBytesResized;
-                        if (mDocumentType == AbstractOption.DocumentType.IdCard) {
-                            scanBackSide();
-                        } else if (KYCManager.getInstance().isFacialRecognition()) {
-                            displayFragment(new FragmentFaceIdTutorial(), true, true);
-                        } else {
-                            displayFragment(new FragmentKycOverview(), true, true);
-                        }
+
+                    if (  (KYCManager.getInstance().isAdditionalImageChecks())
+                        &&(  (sharpness <  SHARPNESS_THRESHOLD)
+                           ||(glare < GLARE_THRESHOLD)
+                           ||(acuantImage.getDpi() < MANDATORY_RESOLUTION_THRESHOLD_SMALL)
+                          )
+                       ) {
+                        final String message = "Image did not meet basic criteria.\nSharpness: "
+                                + sharpness + "(" + SHARPNESS_THRESHOLD + ")\nGlare: "
+                                + glare + "(" + GLARE_THRESHOLD + ")\nDPI: "
+                                + acuantImage.getDpi() + "(" + MANDATORY_RESOLUTION_THRESHOLD_SMALL + ")";
+                        tryAgainWithMessage(message);
                     } else {
-                        DataContainer.instance().mDocBack = imageBytesResized;
-                        if (KYCManager.getInstance().isFacialRecognition()) {
-                            displayFragment(new FragmentFaceIdTutorial(), true, true);
+                        progressBarHide();
+
+                        // Raw data for image
+                        if (mFrontDocument) {
+                            DataContainer.instance().mDocFront = acuantImage.getRawBytes();
+                            if (mDocumentType == AbstractOption.DocumentType.IdCard) {
+                                scanBackSide();
+                            } else if (KYCManager.getInstance().isFacialRecognition()) {
+                                displayFragment(new FragmentFaceIdTutorial(), true, true);
+                            } else {
+                                displayFragment(new FragmentKycOverview(), true, true);
+                            }
                         } else {
-                            displayFragment(new FragmentKycOverview(), true, true);
+                            DataContainer.instance().mDocBack = acuantImage.getRawBytes();
+                            if (KYCManager.getInstance().isFacialRecognition()) {
+                                displayFragment(new FragmentFaceIdTutorial(), true, true);
+                            } else {
+                                displayFragment(new FragmentKycOverview(), true, true);
+                            }
                         }
                     }
                 }
-            }
+
+                @Override
+                public void onError(@NotNull Error error) {
+                    progressBarHide();
+
+                    if (  (KYCManager.getInstance().isAdditionalImageChecks())
+                        &&(error != null && error.errorCode != ErrorCodes.ERROR_LowResolutionImage))
+                    {
+                        if (BuildConfig.DEBUG) {
+                            Log.e("KYC", "Crop error: " + error.errorDescription);
+                        }
+                        tryAgainWithMessage(error.errorDescription);
+                    }
+                    else {
+                        tryAgainWithMessage(getString(R.string.STRING_KYC_DOC_NO_CROP));
+                    }
+                }
+            });
         } else {
             Toast.makeText(this, "Document capture failed.", Toast.LENGTH_LONG).show();
         }
@@ -360,7 +371,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else {
             final Bitmap image = FaceCapturedImage.Companion.getBitmapImage();
             if (image != null) {
-                //final Bitmap resizedImage = ImageUtil.resize(image, 480);
                 DataContainer.instance().mSelfie = ImageUtil.bitmapToBytes(image);
                 displayFragment(new FragmentKycOverview(), true, true);
 
@@ -383,12 +393,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             // Get image
             byte[] imageBytes = readFromFile(data.getStringExtra(FaceCaptureActivity.OUTPUT_URL));
-            Bitmap capturedSelfieImage = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
 
             // Display capture result
-            if (capturedSelfieImage != null) {
-                final Bitmap resizedImage = ImageUtil.resize(capturedSelfieImage, 480);
-                DataContainer.instance().mSelfie = ImageUtil.bitmapToBytes(resizedImage);
+            if (imageBytes != null) {
+                DataContainer.instance().mSelfie = imageBytes;
                 displayFragment(new FragmentKycOverview(), true, true);
 
                 // Cleanup Cache directory
